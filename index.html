@@ -1,0 +1,1725 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Volleyball Planner V7</title>
+<style>
+:root{
+  --bg:#0f172a;
+  --panel:#1e293b;
+  --panel-sub:#151f32;
+  --line:#334155;
+  --text:#f8fafc;
+  --muted:#94a3b8;
+  --blue:#2563eb;
+  --blue-hover:#1d4ed8;
+  --orange:#ea580c;
+  --green:#059669;
+  --purple:#7c3aed;
+  --red:#dc2626;
+  --yellow:#eab308;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;
+  line-height:1.45;
+}
+main{max-width:1180px;margin:auto;padding:16px 14px 48px}
+.head{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:12px;margin-bottom:16px;flex-wrap:wrap;
+}
+h1{font-size:clamp(20px,3.5vw,26px);margin:0;letter-spacing:.03em;display:flex;align-items:center;gap:8px}
+.badge{font-size:11px;background:var(--blue);color:#fff;padding:3px 8px;border-radius:6px;font-weight:700}
+.muted{color:var(--muted);font-size:12px}
+
+/* Layout Grid */
+.workspace{
+  display:grid;
+  grid-template-columns:1.25fr 0.85fr;
+  gap:16px;
+  align-items:start;
+}
+@media(max-width:920px){
+  .workspace{grid-template-columns:1fr}
+}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:14px;
+  box-shadow:0 4px 20px rgba(0,0,0,.2);
+}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.grow{flex:1}
+
+/* Controls */
+button,select,input,textarea{font:inherit}
+button,select{
+  color:var(--text);
+  background:#293548;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:7px 11px;
+  font-size:12.5px;
+  font-weight:500;
+  transition:all .15s;
+}
+button{cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+button:hover{background:#334259}
+button:active{transform:scale(.98)}
+button.active{background:var(--blue);border-color:#60a5fa;color:#fff;font-weight:700}
+button.primary{background:var(--blue);border-color:#3b82f6;color:#fff;font-weight:600}
+button.primary:hover{background:var(--blue-hover)}
+button.warn{background:rgba(220,38,38,.18);border-color:rgba(220,38,38,.5);color:#fca5a5}
+button.warn:hover{background:rgba(220,38,38,.3)}
+button.small{font-size:11.5px;padding:5px 8px}
+
+input,textarea,select{
+  background:var(--panel-sub);
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:7px 9px;
+  font-size:12.5px;
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#60a5fa}
+textarea{width:100%;resize:vertical;min-height:54px}
+
+/* Tabs for Right Panel */
+.tabs{
+  display:flex;gap:4px;background:var(--panel-sub);
+  padding:4px;border-radius:10px;margin-bottom:12px;border:1px solid var(--line);
+}
+.tab-btn{
+  flex:1;background:transparent;border:none;color:var(--muted);
+  padding:8px 6px;border-radius:7px;font-weight:600;font-size:12.5px;
+}
+.tab-btn.active{background:var(--panel);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* Segmented Control */
+.seg{display:inline-flex;background:var(--panel-sub);padding:3px;border-radius:9px;border:1px solid var(--line)}
+.seg button{border:none;background:transparent;padding:5px 10px;border-radius:6px;font-size:12px}
+.seg button.active{background:var(--blue);color:#fff}
+
+/* Court Area */
+.court-toolbar{
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:8px;margin-bottom:10px;
+}
+.court-wrap{width:100%;max-width:560px;margin:0 auto}
+.court{
+  position:relative;width:100%;
+  aspect-ratio:1/1;
+  background:#d99f66;
+  border:3px solid #fff;
+  border-radius:4px;
+  overflow:hidden;
+  touch-action:none;user-select:none;
+  box-shadow:inset 0 0 30px rgba(0,0,0,.08);
+}
+.court.full-court{
+  aspect-ratio:1/1.75;
+  max-width:420px;
+  margin:0 auto;
+}
+/* Net & Lines */
+.net{
+  position:absolute;left:0;right:0;top:0;height:6px;
+  background:repeating-linear-gradient(90deg,#1e293b 0 6px,#f8fafc 6px 10px);
+  z-index:3;box-shadow:0 2px 5px rgba(0,0,0,.4);
+}
+.court.full-court .net{top:50%;transform:translateY(-50%);height:7px}
+.netlabel{
+  position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  font-size:10px;font-weight:800;color:#1e293b;
+  background:rgba(255,255,255,.75);padding:1px 6px;border-radius:4px;z-index:3;
+}
+.court.full-court .netlabel{top:calc(50% + 7px)}
+
+.attack{position:absolute;left:0;right:0;top:33.333%;border-top:2px dashed rgba(255,255,255,.9);pointer-events:none;z-index:1}
+.court.full-court .attack.our-attack{top:66.666%}
+.court.full-court .attack.opp-attack{top:33.333%;display:block}
+.attack.opp-attack{display:none}
+
+.opp-zone-bg{
+  display:none;position:absolute;top:0;left:0;right:0;height:50%;
+  background:rgba(30,41,59,.14);pointer-events:none;
+}
+.court.full-court .opp-zone-bg{display:block}
+
+.measure{
+  position:absolute;left:8px;color:#452c15;background:rgba(255,248,231,.85);
+  padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;pointer-events:none;z-index:1;
+}
+.measure.front{top:calc(33.333% - 22px)}
+.court.full-court .measure.front{top:calc(66.666% - 22px)}
+.measure.back{top:68%}
+.court.full-court .measure.back{top:84%}
+.measure.opp{display:none;top:14%}
+.court.full-court .measure.opp{display:block}
+
+/* Drawing SVG Layer */
+#drawLayer{
+  position:absolute;inset:0;width:100%;height:100%;
+  z-index:2;pointer-events:none;
+}
+.court.draw-active #drawLayer{pointer-events:auto;cursor:crosshair}
+
+/* Players & Ball */
+#players{position:absolute;inset:0;z-index:4;pointer-events:none}
+.player{
+  position:absolute;pointer-events:auto;
+  width:clamp(46px,8.5vw,58px);height:clamp(46px,8.5vw,58px);
+  transform:translate(-50%,-50%);
+  border:2.5px solid #fff;border-radius:50%;
+  background:var(--blue);color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:2px;box-shadow:0 4px 10px rgba(0,0,0,.35);
+  touch-action:none;user-select:none;cursor:grab;
+  transition:left var(--move-ms,650ms) cubic-bezier(.22,.8,.25,1),top var(--move-ms,650ms) cubic-bezier(.22,.8,.25,1),background .15s,transform .15s;
+}
+.court.draw-active .player{pointer-events:none;opacity:.9}
+.player .num{font-size:15px;font-weight:800;line-height:1.1}
+.player .role-tag{font-size:9px;font-weight:800;background:rgba(0,0,0,.3);padding:0 4px;border-radius:3px;margin-top:1px}
+.player .pname{font-size:9.5px;max-width:52px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.95}
+.player.selected{background:var(--orange)!important;outline:3px solid #fde047;z-index:6;transform:translate(-50%,-50%) scale(1.08)}
+.player.libero{background:var(--green)}
+.player.setter{background:var(--purple)}
+.player.dragging{transition:none!important;cursor:grabbing;z-index:9}
+
+/* Volleyball Object */
+.vball{
+  position:absolute;pointer-events:auto;
+  width:30px;height:30px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:radial-gradient(circle at 32% 32%,#fef08a,#eab308 55%,#2563eb 56%,#1d4ed8);
+  border:2px solid #fff;
+  box-shadow:0 4px 8px rgba(0,0,0,.45);
+  cursor:grab;z-index:7;
+  display:grid;place-items:center;font-size:15px;
+  transition:left var(--move-ms,650ms) cubic-bezier(.22,.8,.25,1),top var(--move-ms,650ms) cubic-bezier(.22,.8,.25,1);
+}
+.vball.dragging{transition:none!important;cursor:grabbing}
+.court.draw-active .vball{pointer-events:none}
+
+/* 3D View */
+#scene3d{
+  width:100%;height:clamp(380px,58vw,540px);
+  border:2px solid var(--line);border-radius:12px;
+  overflow:hidden;background:linear-gradient(#7dd3fc,#e0f2fe);
+  position:relative;touch-action:none;
+}
+#scene3d canvas{display:block;width:100%;height:100%}
+
+/* Status & Memo Banner */
+.status-bar{
+  margin-top:10px;padding:9px 12px;border-radius:9px;
+  background:var(--panel-sub);border:1px solid var(--line);
+  font-size:12.5px;color:#bae6fd;display:flex;justify-content:space-between;align-items:center;gap:8px;
+}
+.memo-display{
+  margin-top:8px;padding:10px 12px;border-radius:9px;
+  background:rgba(37,99,235,.14);border-left:4px solid var(--blue);
+  font-size:13px;color:#f1f5f9;display:none;
+}
+
+/* Scene Items */
+.scene-item{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  background:var(--panel-sub);border:1px solid var(--line);
+  border-radius:9px;padding:8px 10px;margin-top:7px;
+}
+.scene-item.active-scene{border-color:#60a5fa;background:rgba(37,99,235,.15)}
+.scene-info{flex:1;min-width:120px}
+.scene-title{font-weight:700;font-size:13px}
+.scene-memo-preview{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+
+/* Roster */
+.roster-item{
+  display:grid;grid-template-columns:28px 66px 1fr auto;
+  align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid rgba(51,65,85,.5);
+}
+.roster-item:last-child{border-bottom:none}
+.chip{
+  width:26px;height:26px;border-radius:50%;background:var(--blue);
+  display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;
+}
+.chip.libero{background:var(--green)}
+.chip.setter{background:var(--purple)}
+
+.help{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+.divider{height:1px;background:var(--line);margin:12px 0}
+</style>
+</head>
+<body>
+<main>
+  <header class="head">
+    <div>
+      <h1>VOLLEYBALL PLANNER <span class="badge">V7 PRO</span></h1>
+      <div class="muted">포메이션 · 작전 화살표 · 3D 입체 시뮬레이터</div>
+    </div>
+    <div class="row">
+      <div class="seg" role="group" aria-label="뷰 전환">
+        <button id="view2d" class="active">2D 작전판</button>
+        <button id="view3d">3D 입체 뷰</button>
+      </div>
+      <div class="seg" role="group" aria-label="코트 범위">
+        <button id="halfCourtBtn" class="active">반코트 (9×9m)</button>
+        <button id="fullCourtBtn">전체코트 (9×18m)</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <!-- LEFT: COURT & ACTION TOOLS -->
+    <div>
+      <section class="panel" style="margin-bottom:0">
+        <div class="court-toolbar">
+          <div class="row">
+            <button id="moveMode" class="active">✋ 이동</button>
+            <button id="swapMode">⇄ 교체</button>
+            <button id="drawArrowMode">↗ 이동선</button>
+            <button id="drawPassMode">⇢ 공 궤적</button>
+            <button id="clearDraw" class="small warn" title="화살표 지우기">지우개</button>
+          </div>
+          <div class="row">
+            <button id="toggleBall" class="small" title="배구공 표시/숨김">🏐 공 ON</button>
+            <button id="rotate" class="small">⟳ 로테이션</button>
+            <button id="switchPos" class="small" title="정위치 / 스위치 전환">⚡ 포지션 스위치</button>
+            <button id="homePositions" class="small">기본 배치</button>
+          </div>
+        </div>
+
+        <!-- 2D Court -->
+        <div class="court-wrap" id="courtWrap">
+          <div class="court" id="court">
+            <div class="opp-zone-bg"></div>
+            <div class="net"></div>
+            <div class="netlabel">NET</div>
+            <div class="attack opp-attack"></div>
+            <div class="attack our-attack"></div>
+            <div class="measure opp">상대 코트 · 9m</div>
+            <div class="measure front">전위 · 3m</div>
+            <div class="measure back">후위 · 6m</div>
+            <svg id="drawLayer" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <defs>
+                <marker id="arrowSolid" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#ffffff"/>
+                </marker>
+                <marker id="arrowBall" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#fde047"/>
+                </marker>
+              </defs>
+              <g id="arrowsGroup"></g>
+              <line id="tempLine" x1="0" y1="0" x2="0" y2="0" stroke="#fff" stroke-width="0.9" stroke-linecap="round" hidden/>
+            </svg>
+            <div id="players"></div>
+            <div id="vball" class="vball" title="배구공 (드래그하여 이동)">🏐</div>
+          </div>
+        </div>
+
+        <!-- 3D Court -->
+        <div id="scene3d" hidden aria-label="3D 배구 코트"></div>
+
+        <div id="memoDisplay" class="memo-display"></div>
+
+        <div class="status-bar">
+          <span id="status">선수와 배구공을 드래그하거나 작전 화살표를 그려보세요.</span>
+          <span class="muted" id="coordHint">2D 모드</span>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT: TACTICS, ROSTER, SETTINGS -->
+    <div>
+      <section class="panel">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="tab-tactics">🎬 전술 시나리오</button>
+          <button class="tab-btn" data-tab="tab-roster">👕 선수 명단</button>
+          <button class="tab-btn" data-tab="tab-share">💾 저장 · 공유</button>
+        </div>
+
+        <!-- TAB 1: TACTICS & SCENARIOS -->
+        <div id="tab-tactics" class="tab-pane active">
+          <div class="row">
+            <select id="groupSelect" class="grow" aria-label="전술 그룹"></select>
+            <button id="addGroup" class="small">＋ 그룹</button>
+            <button id="renameGroup" class="small">이름</button>
+            <button id="deleteGroup" class="small warn">삭제</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row" style="margin-bottom:6px">
+            <input id="sceneName" class="grow" placeholder="상황 이름 (예: A패스 속공 전개)">
+            <button id="saveScene" class="primary">＋ 상황 저장</button>
+          </div>
+          <textarea id="sceneMemo" placeholder="전술 메모 (예: 세터 백토스, 4번 라이트 백어택 준비)"></textarea>
+
+          <div class="row" style="margin-top:10px;justify-content:space-between">
+            <div class="row">
+              <button id="playGroup" class="primary">▶ 전체 재생</button>
+              <button id="stopPlay" class="small">■ 중지</button>
+            </div>
+            <div class="row">
+              <span class="muted">속도</span>
+              <select id="playSpeed" style="padding:5px 7px;font-size:12px">
+                <option value="0.6">느리게</option>
+                <option value="1" selected>보통</option>
+                <option value="1.6">빠르게</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="sceneList" style="margin-top:8px"></div>
+          <div class="help">저장된 상황에는 선수 위치, 배구공 위치, 화살표, 전술 메모가 함께 기록됩니다. ↑/↓ 버튼으로 순서를 바꿀 수 있습니다.</div>
+        </div>
+
+        <!-- TAB 2: ROSTER & POSITIONS -->
+        <div id="tab-roster" class="tab-pane">
+          <div class="row" style="margin-bottom:10px">
+            <strong style="font-size:13px">코트 인원</strong>
+            <select id="count">
+              <option value="6">6명</option>
+              <option value="7">7명</option>
+              <option value="8">8명</option>
+              <option value="9">9명</option>
+            </select>
+            <button id="applyCount" class="small primary">적용</button>
+            <span class="grow"></span>
+            <button id="applyPreset6" class="small" title="기본 S/OH/MB/OP 포지션 자동 배정">표준 포지션 배정</button>
+          </div>
+          <div id="roster"></div>
+          <div class="help">포지션(S:세터, OH:아웃사이드, MB:미들, OP:아포짓, L:리베로)을 지정하면 코트와 3D 모델 색상에 반영됩니다.</div>
+        </div>
+
+        <!-- TAB 3: EXPORT / IMPORT / RESET -->
+        <div id="tab-share" class="tab-pane">
+          <div class="row">
+            <button id="exportProject" class="primary grow">📤 프로젝트 JSON 내보내기</button>
+            <button id="importProject" class="grow">📥 JSON 가져오기</button>
+            <input id="importFile" type="file" accept=".json,application/json" hidden>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="imageSave" class="grow">🖼️ 현재 작전판 이미지(PNG) 저장</button>
+            <button id="copy" class="grow">📋 좌표 텍스트 복사</button>
+          </div>
+          <div class="divider"></div>
+          <button id="resetAll" class="warn" style="width:100%">⚠️ 전체 데이터 초기화</button>
+          <div class="help" style="margin-top:8px">모든 작업은 브라우저에 자동 저장됩니다. 팀원에게 전술을 공유할 때는 JSON 파일이나 PNG 이미지를 전달하세요.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const uid = () => 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+// Base positions (percentage in half-court: 0~100)
+const baseHalf = [
+  [22, 18], [50, 18], [78, 18], // Front row: 4(Left), 3(Center), 2(Right)
+  [22, 68], [50, 68], [78, 68], // Back row: 5(Left), 6(Center), 1(Right)
+  [12, 45], [88, 45], [50, 86]  // Extra players
+];
+
+const ROLES = [
+  { code: '', label: '일반' },
+  { code: 'S', label: 'S (세터)' },
+  { code: 'OH', label: 'OH (레프트)' },
+  { code: 'MB', label: 'MB (센터)' },
+  { code: 'OP', label: 'OP (라이트)' },
+  { code: 'L', label: 'L (리베로)' }
+];
+
+let state = {
+  players: [],
+  ball: { visible: true, x: 50, y: 12 },
+  arrows: [], // { type: 'move'|'ball', x1, y1, x2, y2 }
+  groups: [{ id: 'g1', name: '기본 전술' }],
+  scenes: [],
+  activeGroup: 'g1',
+  courtType: 'half', // 'half' | 'full'
+  switched: false
+};
+
+let mode = 'move'; // 'move' | 'swap' | 'arrow-move' | 'arrow-ball'
+let selected = null;
+let drag = null;
+let ballDrag = null;
+let drawStart = null;
+let playing = false;
+let playToken = 0;
+let activeSceneId = null;
+
+// 3D State
+let viewMode = '2d';
+let renderer3d, scene3d, camera3d, controls3d;
+let threePlayers = new Map();
+let threeBall = null;
+let threeArrowsGroup = null;
+let threeCourtGroup = null;
+let threeReady = false;
+
+// --- Helpers ---
+function say(msg) { $('status').textContent = msg; }
+function saveLocal() {
+  try { localStorage.setItem('volleyPlannerV7', JSON.stringify(state)); } catch (e) {}
+}
+
+// Convert internal half-court Y (0=net, 100=endline) to display Y depending on half/full court
+function toDisplayY(y) {
+  return state.courtType === 'full' ? 50 + y * 0.5 : y;
+}
+function fromDisplayY(dy) {
+  return state.courtType === 'full' ? (dy - 50) * 2 : dy;
+}
+
+function getRoleColor(role, hex = false) {
+  if (role === 'L') return hex ? 0x059669 : '#059669';
+  if (role === 'S') return hex ? 0x7c3aed : '#7c3aed';
+  return hex ? 0x2563eb : '#2563eb';
+}
+
+// --- Tabs ---
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $(btn.dataset.tab).classList.add('active');
+  };
+});
+
+// --- Court Type (Half vs Full) ---
+function setCourtType(type) {
+  state.courtType = type;
+  $('halfCourtBtn').classList.toggle('active', type === 'half');
+  $('fullCourtBtn').classList.toggle('active', type === 'full');
+  $('court').classList.toggle('full-court', type === 'full');
+  render();
+  if (threeReady) build3DCourt();
+  saveLocal();
+}
+$('halfCourtBtn').onclick = () => setCourtType('half');
+$('fullCourtBtn').onclick = () => setCourtType('full');
+
+// --- Players & Roster ---
+function makePlayers(n) {
+  const defaultRoles = ['OH', 'MB', 'OP', 'OH', 'MB', 'S', 'L', '', ''];
+  state.players = Array.from({ length: n }, (_, i) => ({
+    id: i + 1,
+    name: '선수 ' + (i + 1),
+    role: defaultRoles[i] || '',
+    x: baseHalf[i][0],
+    y: baseHalf[i][1]
+  }));
+  selected = null;
+  state.arrows = [];
+  render();
+  saveLocal();
+}
+
+function render() {
+  const layer = $('players');
+  layer.innerHTML = '';
+
+  state.players.forEach(p => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'player' +
+      (p.id === selected ? ' selected' : '') +
+      (p.role === 'L' ? ' libero' : '') +
+      (p.role === 'S' ? ' setter' : '');
+    b.dataset.id = p.id;
+    b.style.left = p.x + '%';
+    b.style.top = toDisplayY(p.y) + '%';
+
+    const roleBadge = p.role ? `<span class="role-tag">${p.role}</span>` : '';
+    b.innerHTML = `<span class="num">${p.id}</span>${roleBadge}<span class="pname"></span>`;
+    b.querySelector('.pname').textContent = p.name;
+    layer.appendChild(b);
+  });
+
+  // Ball
+  const ballEl = $('vball');
+  ballEl.hidden = !state.ball.visible;
+  ballEl.style.left = state.ball.x + '%';
+  ballEl.style.top = toDisplayY(state.ball.y) + '%';
+  $('toggleBall').textContent = state.ball.visible ? '🏐 공 ON' : '🏐 공 OFF';
+  $('toggleBall').classList.toggle('active', state.ball.visible);
+
+  renderArrows();
+  renderRoster();
+  renderGroups();
+  sync3DObjects();
+}
+
+function renderRoster() {
+  const roster = $('roster');
+  roster.innerHTML = '';
+  state.players.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'roster-item';
+
+    const chip = document.createElement('span');
+    chip.className = 'chip' + (p.role === 'L' ? ' libero' : '') + (p.role === 'S' ? ' setter' : '');
+    chip.textContent = p.id;
+
+    const roleSel = document.createElement('select');
+    roleSel.style.padding = '5px 4px';
+    roleSel.style.fontSize = '11.5px';
+    ROLES.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.code;
+      opt.textContent = r.code || '일반';
+      if (p.role === r.code) opt.selected = true;
+      roleSel.appendChild(opt);
+    });
+    roleSel.onchange = () => {
+      if (roleSel.value === 'L') {
+        state.players.forEach(q => { if (q.role === 'L') q.role = ''; });
+      }
+      p.role = roleSel.value;
+      render();
+      saveLocal();
+    };
+
+    const input = document.createElement('input');
+    input.value = p.name;
+    input.placeholder = '선수 이름';
+    input.oninput = () => {
+      p.name = input.value;
+      const el = $('players').querySelector(`[data-id="${p.id}"] .pname`);
+      if (el) el.textContent = p.name;
+      sync3DObjects();
+      saveLocal();
+    };
+
+    row.append(chip, roleSel, input);
+    roster.appendChild(row);
+  });
+  $('count').value = state.players.length;
+}
+
+// --- Arrows Drawing ---
+function renderArrows() {
+  const g = $('arrowsGroup');
+  g.innerHTML = '';
+  state.arrows.forEach(a => {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', a.x1);
+    line.setAttribute('y1', toDisplayY(a.y1));
+    line.setAttribute('x2', a.x2);
+    line.setAttribute('y2', toDisplayY(a.y2));
+    line.setAttribute('stroke-linecap', 'round');
+    if (a.type === 'ball') {
+      line.setAttribute('stroke', '#fde047');
+      line.setAttribute('stroke-width', '0.9');
+      line.setAttribute('stroke-dasharray', '2.2, 1.6');
+      line.setAttribute('marker-end', 'url(#arrowBall)');
+    } else {
+      line.setAttribute('stroke', '#ffffff');
+      line.setAttribute('stroke-width', '1.05');
+      line.setAttribute('marker-end', 'url(#arrowSolid)');
+    }
+    g.appendChild(line);
+  });
+}
+
+// --- Interaction Modes ---
+function setMode(newMode) {
+  mode = newMode;
+  selected = null;
+  $('moveMode').classList.toggle('active', mode === 'move');
+  $('swapMode').classList.toggle('active', mode === 'swap');
+  $('drawArrowMode').classList.toggle('active', mode === 'arrow-move');
+  $('drawPassMode').classList.toggle('active', mode === 'arrow-ball');
+  $('court').classList.toggle('draw-active', mode.startsWith('arrow'));
+  render();
+
+  const msgs = {
+    'move': '이동 모드: 선수나 배구공을 드래그해 배치하세요.',
+    'swap': '교체 모드: 위치를 바꿀 두 선수를 차례로 클릭하세요.',
+    'arrow-move': '이동선 모드: 코트 위를 드래그해 선수 이동 화살표를 그리세요.',
+    'arrow-ball': '공 궤적 모드: 코트 위를 드래그해 토스/스파이크 궤적을 그리세요.'
+  };
+  say(msgs[mode]);
+}
+
+$('moveMode').onclick = () => setMode('move');
+$('swapMode').onclick = () => setMode('swap');
+$('drawArrowMode').onclick = () => setMode('arrow-move');
+$('drawPassMode').onclick = () => setMode('arrow-ball');
+$('clearDraw').onclick = () => {
+  state.arrows = [];
+  renderArrows();
+  sync3DArrows();
+  saveLocal();
+  say('작전 화살표를 모두 지웠습니다.');
+};
+$('toggleBall').onclick = () => {
+  state.ball.visible = !state.ball.visible;
+  render();
+  saveLocal();
+};
+
+// Coordinate conversion from pointer event
+function getCourtCoords(clientX, clientY) {
+  const r = $('court').getBoundingClientRect();
+  const dx = Math.max(3, Math.min(97, ((clientX - r.left) / r.width) * 100));
+  const dy = Math.max(2, Math.min(98, ((clientY - r.top) / r.height) * 100));
+  return { dx, dy, y: fromDisplayY(dy) };
+}
+
+// Player Drag & Swap
+$('players').addEventListener('pointerdown', e => {
+  const el = e.target.closest('.player');
+  if (!el) return;
+  const id = Number(el.dataset.id);
+
+  if (mode === 'swap') {
+    if (selected === null) {
+      selected = id;
+      say(`선수 ${id} 선택됨. 교체할 상대를 클릭하세요.`);
+    } else if (selected === id) {
+      selected = null;
+      say('선택 해제');
+    } else {
+      const a = state.players.find(p => p.id === selected);
+      const b = state.players.find(p => p.id === id);
+      [a.x, b.x] = [b.x, a.x];
+      [a.y, b.y] = [b.y, a.y];
+      selected = null;
+      saveLocal();
+      say('두 선수의 위치를 교체했습니다.');
+    }
+    render();
+    return;
+  }
+
+  if (mode === 'move') {
+    e.preventDefault();
+    drag = { id, pointerId: e.pointerId };
+    selected = id;
+    el.classList.add('dragging', 'selected');
+    try { el.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+});
+
+$('players').addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  const p = state.players.find(q => q.id === drag.id);
+  if (!p) return;
+  const pt = getCourtCoords(e.clientX, e.clientY);
+  p.x = pt.dx;
+  p.y = pt.y;
+  const el = $('players').querySelector(`[data-id="${p.id}"]`);
+  if (el) {
+    el.style.left = p.x + '%';
+    el.style.top = pt.dy + '%';
+  }
+  sync3DObjects();
+});
+
+function endPlayerDrag(e) {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  drag = null;
+  selected = null;
+  render();
+  saveLocal();
+}
+$('players').addEventListener('pointerup', endPlayerDrag);
+$('players').addEventListener('pointercancel', endPlayerDrag);
+
+// Ball Drag
+$('vball').addEventListener('pointerdown', e => {
+  if (mode !== 'move') return;
+  e.preventDefault();
+  e.stopPropagation();
+  ballDrag = { pointerId: e.pointerId };
+  $('vball').classList.add('dragging');
+  try { $('vball').setPointerCapture(e.pointerId); } catch (_) {}
+});
+$('vball').addEventListener('pointermove', e => {
+  if (!ballDrag || e.pointerId !== ballDrag.pointerId) return;
+  const pt = getCourtCoords(e.clientX, e.clientY);
+  state.ball.x = pt.dx;
+  state.ball.y = pt.y;
+  $('vball').style.left = pt.dx + '%';
+  $('vball').style.top = pt.dy + '%';
+  sync3DObjects();
+});
+function endBallDrag(e) {
+  if (!ballDrag || e.pointerId !== ballDrag.pointerId) return;
+  ballDrag = null;
+  $('vball').classList.remove('dragging');
+  saveLocal();
+}
+$('vball').addEventListener('pointerup', endBallDrag);
+$('vball').addEventListener('pointercancel', endBallDrag);
+
+// SVG Arrow Drawing
+$('drawLayer').addEventListener('pointerdown', e => {
+  if (!mode.startsWith('arrow')) return;
+  e.preventDefault();
+  const pt = getCourtCoords(e.clientX, e.clientY);
+  drawStart = { pointerId: e.pointerId, x1: pt.dx, y1: pt.y, dy1: pt.dy };
+  const temp = $('tempLine');
+  temp.setAttribute('x1', pt.dx);
+  temp.setAttribute('y1', pt.dy);
+  temp.setAttribute('x2', pt.dx);
+  temp.setAttribute('y2', pt.dy);
+  temp.setAttribute('stroke', mode === 'arrow-ball' ? '#fde047' : '#ffffff');
+  temp.setAttribute('stroke-dasharray', mode === 'arrow-ball' ? '2.2, 1.6' : 'none');
+  temp.removeAttribute('hidden');
+  try { $('drawLayer').setPointerCapture(e.pointerId); } catch (_) {}
+});
+
+$('drawLayer').addEventListener('pointermove', e => {
+  if (!drawStart || e.pointerId !== drawStart.pointerId) return;
+  const pt = getCourtCoords(e.clientX, e.clientY);
+  const temp = $('tempLine');
+  temp.setAttribute('x2', pt.dx);
+  temp.setAttribute('y2', pt.dy);
+});
+
+$('drawLayer').addEventListener('pointerup', e => {
+  if (!drawStart || e.pointerId !== drawStart.pointerId) return;
+  const pt = getCourtCoords(e.clientX, e.clientY);
+  $('tempLine').setAttribute('hidden', '');
+  const dist = Math.hypot(pt.dx - drawStart.x1, pt.dy - drawStart.dy1);
+  if (dist > 3) {
+    state.arrows.push({
+      type: mode === 'arrow-ball' ? 'ball' : 'move',
+      x1: drawStart.x1,
+      y1: drawStart.y1,
+      x2: pt.dx,
+      y2: pt.y
+    });
+    renderArrows();
+    sync3DArrows();
+    saveLocal();
+  }
+  drawStart = null;
+});
+
+// --- Rotation & Position Switch ---
+$('rotate').onclick = () => {
+  const six = state.players.slice(0, 6);
+  const old = six.map(p => [p.x, p.y]);
+  six.forEach((p, i) => {
+    const j = (i + 5) % 6;
+    p.x = old[j][0];
+    p.y = old[j][1];
+  });
+  state.switched = false;
+  render();
+  saveLocal();
+  say('로테이션을 1칸 회전했습니다.');
+};
+
+$('homePositions').onclick = () => {
+  state.players.forEach((p, i) => {
+    p.x = baseHalf[i][0];
+    p.y = baseHalf[i][1];
+  });
+  state.switched = false;
+  render();
+  saveLocal();
+  say('기본 배치로 복귀했습니다.');
+};
+
+// Smart Position Switch (S -> Right, OH -> Left, MB -> Center)
+$('switchPos').onclick = () => {
+  const six = state.players.slice(0, 6);
+  const front = six.filter(p => p.y < 45);
+  const back = six.filter(p => p.y >= 45);
+
+  // Sort front row by target role: OH(Left:22), MB(Center:50), S/OP(Right:78)
+  const frontOrder = r => r === 'OH' ? 1 : (r === 'MB' ? 2 : 3);
+  front.sort((a, b) => frontOrder(a.role) - frontOrder(b.role));
+  const frontSlots = [22, 50, 78];
+  front.forEach((p, idx) => { if (frontSlots[idx] !== undefined) p.x = frontSlots[idx]; });
+
+  // Sort back row by target role: OH/L(Left:22), MB/L(Center:50), S/OP(Right:78)
+  const backOrder = r => (r === 'OH' || r === 'L') ? 1 : (r === 'MB' ? 2 : 3);
+  back.sort((a, b) => backOrder(a.role) - backOrder(b.role));
+  const backSlots = [22, 50, 78];
+  back.forEach((p, idx) => { if (backSlots[idx] !== undefined) p.x = backSlots[idx]; });
+
+  state.switched = !state.switched;
+  render();
+  saveLocal();
+  say('역할(S/OH/MB/OP) 기준 전·후위 포지션 스위치를 적용했습니다.');
+};
+
+$('applyCount').onclick = () => {
+  const n = Number($('count').value);
+  if (confirm(`선수 인원을 ${n}명으로 변경하면 현재 배치가 초기화됩니다. 계속할까요?`)) {
+    makePlayers(n);
+    say(`선수 인원을 ${n}명으로 설정했습니다.`);
+  }
+};
+
+$('applyPreset6').onclick = () => {
+  const roles = ['OH', 'MB', 'OP', 'OH', 'MB', 'S', 'L'];
+  state.players.forEach((p, i) => { p.role = roles[i] || ''; });
+  render();
+  saveLocal();
+  say('표준 배구 포지션(OH, MB, OP, S, L)을 배정했습니다.');
+};
+
+// --- Tactical Groups & Scenes ---
+function renderGroups() {
+  const sel = $('groupSelect');
+  sel.innerHTML = '';
+  state.groups.forEach(g => {
+    const o = document.createElement('option');
+    o.value = g.id;
+    o.textContent = g.name;
+    sel.append(o);
+  });
+  if (!state.groups.some(g => g.id === state.activeGroup)) {
+    state.activeGroup = state.groups[0]?.id;
+  }
+  sel.value = state.activeGroup;
+
+  const list = $('sceneList');
+  list.innerHTML = '';
+  const items = state.scenes.filter(s => s.groupId === state.activeGroup);
+
+  if (!items.length) {
+    list.innerHTML = '<div class="help" style="text-align:center;padding:14px 0">이 그룹에 저장된 상황이 없습니다. 위에서 상황을 저장해 보세요.</div>';
+    return;
+  }
+
+  items.forEach((s, idx) => {
+    const item = document.createElement('div');
+    item.className = 'scene-item' + (s.id === activeSceneId ? ' active-scene' : '');
+
+    const info = document.createElement('div');
+    info.className = 'scene-info';
+    info.innerHTML = `<div class="scene-title">${idx + 1}. ${s.name}</div>` +
+      (s.memo ? `<div class="scene-memo-preview">📝 ${s.memo}</div>` : '');
+
+    const btnPlay = document.createElement('button');
+    btnPlay.className = 'small primary';
+    btnPlay.textContent = '▶';
+    btnPlay.title = '이 상황 재생';
+    btnPlay.onclick = () => playScene(s.id);
+
+    const btnUp = document.createElement('button');
+    btnUp.className = 'small';
+    btnUp.textContent = '↑';
+    btnUp.disabled = idx === 0;
+    btnUp.onclick = () => moveScene(s.id, -1);
+
+    const btnDown = document.createElement('button');
+    btnDown.className = 'small';
+    btnDown.textContent = '↓';
+    btnDown.disabled = idx === items.length - 1;
+    btnDown.onclick = () => moveScene(s.id, 1);
+
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'small';
+    btnEdit.textContent = '수정';
+    btnEdit.onclick = () => {
+      const newName = prompt('상황 이름', s.name);
+      if (newName !== null && newName.trim()) s.name = newName.trim();
+      const newMemo = prompt('전술 메모 (비워두면 삭제)', s.memo || '');
+      if (newMemo !== null) s.memo = newMemo.trim();
+      renderGroups();
+      saveLocal();
+    };
+
+    const btnDel = document.createElement('button');
+    btnDel.className = 'small warn';
+    btnDel.textContent = '삭제';
+    btnDel.onclick = () => {
+      if (confirm('이 상황을 삭제할까요?')) {
+        state.scenes = state.scenes.filter(x => x.id !== s.id);
+        renderGroups();
+        saveLocal();
+      }
+    };
+
+    item.append(info, btnPlay, btnUp, btnDown, btnEdit, btnDel);
+    list.appendChild(item);
+  });
+}
+
+function moveScene(sceneId, dir) {
+  const groupScenes = state.scenes.filter(s => s.groupId === state.activeGroup);
+  const idx = groupScenes.findIndex(s => s.id === sceneId);
+  if (idx < 0 || idx + dir < 0 || idx + dir >= groupScenes.length) return;
+  const targetA = groupScenes[idx];
+  const targetB = groupScenes[idx + dir];
+  const realIdxA = state.scenes.indexOf(targetA);
+  const realIdxB = state.scenes.indexOf(targetB);
+  [state.scenes[realIdxA], state.scenes[realIdxB]] = [state.scenes[realIdxB], state.scenes[realIdxA]];
+  renderGroups();
+  saveLocal();
+}
+
+$('groupSelect').onchange = () => {
+  state.activeGroup = $('groupSelect').value;
+  renderGroups();
+  saveLocal();
+};
+$('addGroup').onclick = () => {
+  const name = prompt('새 전술 그룹 이름 (예: 서브 리시브 A)');
+  if (!name || !name.trim()) return;
+  const g = { id: uid(), name: name.trim() };
+  state.groups.push(g);
+  state.activeGroup = g.id;
+  renderGroups();
+  saveLocal();
+};
+$('renameGroup').onclick = () => {
+  const g = state.groups.find(x => x.id === state.activeGroup);
+  if (!g) return;
+  const name = prompt('그룹 이름 변경', g.name);
+  if (name && name.trim()) {
+    g.name = name.trim();
+    renderGroups();
+    saveLocal();
+  }
+};
+$('deleteGroup').onclick = () => {
+  if (state.groups.length < 2) { alert('최소 1개의 그룹은 유지해야 합니다.'); return; }
+  if (!confirm('현재 그룹과 포함된 모든 상황을 삭제할까요?')) return;
+  state.scenes = state.scenes.filter(s => s.groupId !== state.activeGroup);
+  state.groups = state.groups.filter(g => g.id !== state.activeGroup);
+  state.activeGroup = state.groups[0].id;
+  renderGroups();
+  saveLocal();
+};
+
+$('saveScene').onclick = () => {
+  const countInGroup = state.scenes.filter(s => s.groupId === state.activeGroup).length;
+  const name = $('sceneName').value.trim() || `상황 ${countInGroup + 1}`;
+  const memo = $('sceneMemo').value.trim();
+  const newScene = {
+    id: uid(),
+    name,
+    memo,
+    groupId: state.activeGroup,
+    positions: state.players.map(p => ({ id: p.id, x: p.x, y: p.y })),
+    ball: { ...state.ball },
+    arrows: JSON.parse(JSON.stringify(state.arrows))
+  };
+  state.scenes.push(newScene);
+  activeSceneId = newScene.id;
+  $('sceneName').value = '';
+  $('sceneMemo').value = '';
+  renderGroups();
+  saveLocal();
+  say(`“${name}” 상황을 저장했습니다.`);
+};
+
+function showMemo(memo) {
+  const box = $('memoDisplay');
+  if (memo) {
+    box.style.display = 'block';
+    box.textContent = '📝 전술 메모: ' + memo;
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function animateTo(scene, token) {
+  return new Promise(resolve => {
+    if (token !== playToken) { resolve(); return; }
+    if (scene.positions.length !== state.players.length) {
+      say(`“${scene.name}”은 ${scene.positions.length}명 기준입니다. 현재 인원(${state.players.length}명)과 다릅니다.`);
+      resolve();
+      return;
+    }
+
+    activeSceneId = scene.id;
+    showMemo(scene.memo);
+
+    const speed = Number($('playSpeed').value) || 1;
+    const baseMs = Math.round(700 / speed);
+
+    state.players.forEach(p => {
+      const target = scene.positions.find(q => q.id === p.id);
+      if (target) { p.x = target.x; p.y = target.y; }
+    });
+    if (scene.ball) {
+      state.ball = { ...scene.ball };
+    }
+    state.arrows = scene.arrows ? JSON.parse(JSON.stringify(scene.arrows)) : [];
+
+    render();
+    document.querySelectorAll('.player, .vball').forEach(el => {
+      el.style.setProperty('--move-ms', baseMs + 'ms');
+    });
+
+    say(`▶ “${scene.name}” 재생 중…`);
+    setTimeout(() => resolve(), baseMs + 120);
+  });
+}
+
+async function playScene(id) {
+  const s = state.scenes.find(x => x.id === id);
+  if (!s) return;
+  playToken++;
+  playing = true;
+  const token = playToken;
+  await animateTo(s, token);
+  if (token === playToken) {
+    playing = false;
+    saveLocal();
+    say(`“${s.name}” 재생 완료`);
+  }
+}
+
+$('playGroup').onclick = async () => {
+  const items = state.scenes.filter(s => s.groupId === state.activeGroup);
+  if (!items.length) { say('재생할 상황이 없습니다.'); return; }
+  playToken++;
+  const token = playToken;
+  playing = true;
+  const speed = Number($('playSpeed').value) || 1;
+
+  for (const s of items) {
+    if (token !== playToken) break;
+    await animateTo(s, token);
+    await new Promise(r => setTimeout(r, Math.round(450 / speed)));
+  }
+  if (token === playToken) {
+    playing = false;
+    saveLocal();
+    say('그룹 시나리오 전체 재생이 완료되었습니다.');
+  }
+};
+
+$('stopPlay').onclick = () => {
+  playToken++;
+  playing = false;
+  say('재생을 중지했습니다.');
+};
+
+// =========================================================================
+// 3D VISUALIZATION (Tall Humanoid Players & Realistic Net Mesh)
+// =========================================================================
+function setView(mode) {
+  viewMode = mode;
+  $('courtWrap').hidden = mode !== '2d';
+  $('scene3d').hidden = mode !== '3d';
+  $('view2d').classList.toggle('active', mode === '2d');
+  $('view3d').classList.toggle('active', mode === '3d');
+  $('coordHint').textContent = mode === '2d' ? '2D 편집 모드' : '3D 관찰 모드 (드래그: 회전 / 휠·핀치: 줌)';
+
+  if (mode === '3d') {
+    init3D();
+    sync3DObjects();
+    const w = $('scene3d').clientWidth;
+    const h = $('scene3d').clientHeight;
+    renderer3d.setSize(w, h);
+    camera3d.aspect = w / h;
+    camera3d.updateProjectionMatrix();
+  }
+}
+$('view2d').onclick = () => setView('2d');
+$('view3d').onclick = () => setView('3d');
+
+// Realistic Net Texture Generator
+function createNetTexture() {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 128;
+  const ctx = c.getContext('2d');
+
+  // Transparent background
+  ctx.clearRect(0, 0, 512, 128);
+
+  // Top & Bottom White Tape
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0, 0, 512, 14);
+  ctx.fillRect(0, 118, 512, 10);
+
+  // Dark Mesh Grid
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.88)';
+  ctx.lineWidth = 3;
+  const step = 16;
+  for (let x = 0; x <= 512; x += step) {
+    ctx.beginPath(); ctx.moveTo(x, 14); ctx.lineTo(x, 118); ctx.stroke();
+  }
+  for (let y = 14; y <= 118; y += step) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+  }
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.repeat.set(9, 1);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// Player Jersey / Floating Badge Texture
+function makePlayerLabelTexture(p) {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 128;
+  const ctx = c.getContext('2d');
+
+  ctx.fillStyle = p.role === 'L' ? '#059669' : (p.role === 'S' ? '#7c3aed' : '#1e293b');
+  ctx.beginPath();
+  ctx.roundRect(8, 8, 240, 112, 24);
+  ctx.fill();
+
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 6;
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 44px system-ui, sans-serif';
+  const title = p.role ? `#${p.id} [${p.role}]` : `#${p.id}`;
+  ctx.fillText(title, 128, 46);
+
+  ctx.font = 'bold 30px system-ui, sans-serif';
+  let name = p.name || `선수 ${p.id}`;
+  while (ctx.measureText(name).width > 210 && name.length > 2) name = name.slice(0, -1);
+  ctx.fillText(name, 128, 92);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function build3DCourt() {
+  if (threeCourtGroup) scene3d.remove(threeCourtGroup);
+  threeCourtGroup = new THREE.Group();
+
+  const isFull = state.courtType === 'full';
+  const lengthZ = isFull ? 18 : 9;
+  const centerZ = isFull ? 0 : 0; // Half court: z from -4.5 (net) to +4.5 (endline). Full court: z from -9 to +9, net at 0.
+
+  // Outer Apron (Free Zone)
+  const apron = new THREE.Mesh(
+    new THREE.PlaneGeometry(13, lengthZ + 4),
+    new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.85 })
+  );
+  apron.rotation.x = -Math.PI / 2;
+  apron.position.set(0, -0.02, centerZ);
+  threeCourtGroup.add(apron);
+
+  // Wooden Court Floor
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(9, lengthZ),
+    new THREE.MeshStandardMaterial({ color: 0xd99f66, roughness: 0.78 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, 0, centerZ);
+  floor.receiveShadow = true;
+  threeCourtGroup.add(floor);
+
+  // Court Lines Helper
+  const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  function addLine(w, d, x, z) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), lineMat);
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(x, 0.008, z);
+    threeCourtGroup.add(m);
+  }
+
+  const zMin = isFull ? -9 : -4.5;
+  const zMax = isFull ? 9 : 4.5;
+  const netZ = isFull ? 0 : -4.5;
+
+  // Sidelines & Endlines
+  addLine(0.08, lengthZ, -4.5, centerZ);
+  addLine(0.08, lengthZ, 4.5, centerZ);
+  addLine(9.08, 0.08, 0, zMin);
+  addLine(9.08, 0.08, 0, zMax);
+
+  // Attack Lines (3m from net)
+  addLine(9, 0.07, 0, netZ + 3);
+  if (isFull) {
+    addLine(9, 0.07, 0, netZ - 3);
+    addLine(9, 0.08, 0, netZ); // Center line
+  }
+
+  // --- Realistic Volleyball Net Assembly ---
+  const netGroup = new THREE.Group();
+  netGroup.position.set(0, 0, netZ);
+
+  // Net Posts (Left & Right outside sidelines)
+  const postGeo = new THREE.CylinderGeometry(0.06, 0.06, 2.55, 16);
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.6, roughness: 0.3 });
+  const postL = new THREE.Mesh(postGeo, postMat);
+  postL.position.set(-4.85, 1.275, 0);
+  const postR = new THREE.Mesh(postGeo, postMat);
+  postR.position.set(4.85, 1.275, 0);
+  netGroup.add(postL, postR);
+
+  // Net Mesh Plane (Height: 1.0m, Top at 2.43m, Bottom at 1.43m)
+  const netTex = createNetTexture();
+  const netMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(9.0, 1.0),
+    new THREE.MeshStandardMaterial({
+      map: netTex,
+      transparent: true,
+      side: THREE.DoubleSide,
+      roughness: 0.6
+    })
+  );
+  netMesh.position.set(0, 1.93, 0);
+  netGroup.add(netMesh);
+
+  // Side White Tapes
+  const sideTapeGeo = new THREE.BoxGeometry(0.06, 1.0, 0.02);
+  const sideTapeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const tapeL = new THREE.Mesh(sideTapeGeo, sideTapeMat);
+  tapeL.position.set(-4.48, 1.93, 0);
+  const tapeR = new THREE.Mesh(sideTapeGeo, sideTapeMat);
+  tapeR.position.set(4.48, 1.93, 0);
+  netGroup.add(tapeL, tapeR);
+
+  // Red & White Antennas (extending 0.8m above net)
+  const antGeo = new THREE.CylinderGeometry(0.015, 0.015, 1.8, 10);
+  const antMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+  const antL = new THREE.Mesh(antGeo, antMat);
+  antL.position.set(-4.5, 2.33, 0);
+  const antR = new THREE.Mesh(antGeo, antMat);
+  antR.position.set(4.5, 2.33, 0);
+  netGroup.add(antL, antR);
+
+  threeCourtGroup.add(netGroup);
+  scene3d.add(threeCourtGroup);
+}
+
+// Create Tall Humanoid 3D Player Figure (~1.85m tall)
+function createPlayer3DFigure(p) {
+  const group = new THREE.Group();
+  const jerseyColor = getRoleColor(p.role, true);
+
+  // Base Ring on Floor
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.28, 0.36, 32),
+    new THREE.MeshBasicMaterial({ color: jerseyColor, side: THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.015;
+  group.add(ring);
+
+  // Legs (Shorts + Lower Legs)
+  const legMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 });
+  const legGeo = new THREE.CylinderGeometry(0.09, 0.07, 0.78, 16);
+  const legL = new THREE.Mesh(legGeo, legMat);
+  legL.position.set(-0.11, 0.39, 0);
+  const legR = new THREE.Mesh(legGeo, legMat);
+  legR.position.set(0.11, 0.39, 0);
+  group.add(legL, legR);
+
+  // Torso (Jersey Capsule/Cylinder)
+  const torsoMat = new THREE.MeshStandardMaterial({ color: jerseyColor, roughness: 0.55 });
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.21, 0.55, 8, 20), torsoMat);
+  torso.position.y = 1.15;
+  torso.castShadow = true;
+  group.add(torso);
+
+  // Shoulders / Arms in Ready Stance
+  const armMat = new THREE.MeshStandardMaterial({ color: 0xf1c27d, roughness: 0.6 });
+  const armGeo = new THREE.CapsuleGeometry(0.055, 0.44, 6, 12);
+  const armL = new THREE.Mesh(armGeo, armMat);
+  armL.position.set(-0.27, 1.15, 0.08);
+  armL.rotation.set(-0.35, 0, 0.18);
+  const armR = new THREE.Mesh(armGeo, armMat);
+  armR.position.set(0.27, 1.15, 0.08);
+  armR.rotation.set(-0.35, 0, -0.18);
+  group.add(armL, armR);
+
+  // Head
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.16, 20, 20),
+    new THREE.MeshStandardMaterial({ color: 0xf1c27d, roughness: 0.5 })
+  );
+  head.position.y = 1.72;
+  head.castShadow = true;
+  group.add(head);
+
+  // Floating Name & Number Sprite above Head
+  const spriteMat = new THREE.SpriteMaterial({ map: makePlayerLabelTexture(p), transparent: true });
+  const sprite = new THREE.Sprite(spriteMat);
+  sprite.scale.set(1.15, 0.58, 1);
+  sprite.position.y = 2.22;
+  group.add(sprite);
+
+  group.userData = { torsoMat, ringMat: ring.material, spriteMat };
+  return group;
+}
+
+function init3D() {
+  if (threeReady) return;
+  const host = $('scene3d');
+
+  renderer3d = new THREE.WebGLRenderer({ antialias: true });
+  renderer3d.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer3d.setSize(host.clientWidth, host.clientHeight);
+  renderer3d.outputColorSpace = THREE.SRGBColorSpace;
+  renderer3d.shadowMap.enabled = true;
+  host.appendChild(renderer3d.domElement);
+
+  scene3d = new THREE.Scene();
+  scene3d.background = new THREE.Color(0xbae6fd);
+  scene3d.fog = new THREE.Fog(0xbae6fd, 22, 48);
+
+  camera3d = new THREE.PerspectiveCamera(45, host.clientWidth / host.clientHeight, 0.1, 100);
+  camera3d.position.set(0, 8.5, 11.5);
+
+  controls3d = new OrbitControls(camera3d, renderer3d.domElement);
+  controls3d.target.set(0, 1.0, 0);
+  controls3d.enableDamping = true;
+  controls3d.dampingFactor = 0.07;
+  controls3d.minDistance = 5;
+  controls3d.maxDistance = 26;
+  controls3d.maxPolarAngle = Math.PI * 0.48;
+
+  // Lighting
+  scene3d.add(new THREE.HemisphereLight(0xffffff, 0x475569, 1.6));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+  dirLight.position.set(6, 14, 8);
+  dirLight.castShadow = true;
+  scene3d.add(dirLight);
+
+  build3DCourt();
+
+  // 3D Volleyball
+  threeBall = new THREE.Mesh(
+    new THREE.SphereGeometry(0.16, 24, 24),
+    new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.4 })
+  );
+  threeBall.castShadow = true;
+  scene3d.add(threeBall);
+
+  threeArrowsGroup = new THREE.Group();
+  scene3d.add(threeArrowsGroup);
+
+  threeReady = true;
+  sync3DObjects();
+
+  const ro = new ResizeObserver(() => {
+    if (!renderer3d) return;
+    const w = host.clientWidth, h = host.clientHeight;
+    if (w > 0 && h > 0) {
+      renderer3d.setSize(w, h);
+      camera3d.aspect = w / h;
+      camera3d.updateProjectionMatrix();
+    }
+  });
+  ro.observe(host);
+
+  const animate = () => {
+    requestAnimationFrame(animate);
+    if (!threeReady) return;
+    threePlayers.forEach(o => {
+      o.group.position.x += (o.target.x - o.group.position.x) * 0.14;
+      o.group.position.z += (o.target.z - o.group.position.z) * 0.14;
+    });
+    if (threeBall && threeBall.userData.target) {
+      threeBall.position.x += (threeBall.userData.target.x - threeBall.position.x) * 0.14;
+      threeBall.position.z += (threeBall.userData.target.z - threeBall.position.z) * 0.14;
+    }
+    controls3d.update();
+    renderer3d.render(scene3d, camera3d);
+  };
+  animate();
+}
+
+function to3DCoords(px, py) {
+  const x = ((px - 50) / 100) * 9;
+  const z = state.courtType === 'full'
+    ? (py / 100) * 9
+    : ((py - 50) / 100) * 9;
+  return { x, z };
+}
+
+function sync3DObjects() {
+  if (!threeReady) return;
+
+  const liveIds = new Set(state.players.map(p => p.id));
+  for (const [id, o] of threePlayers) {
+    if (!liveIds.has(id)) {
+      scene3d.remove(o.group);
+      threePlayers.delete(id);
+    }
+  }
+
+  state.players.forEach(p => {
+    const pos = to3DCoords(p.x, p.y);
+    let o = threePlayers.get(p.id);
+    if (!o) {
+      const group = createPlayer3DFigure(p);
+      group.position.set(pos.x, 0, pos.z);
+      scene3d.add(group);
+      o = { group, target: { x: pos.x, z: pos.z } };
+      threePlayers.set(p.id, o);
+    } else {
+      o.target.x = pos.x;
+      o.target.z = pos.z;
+      const color = getRoleColor(p.role, true);
+      o.group.userData.torsoMat.color.setHex(color);
+      o.group.userData.ringMat.color.setHex(color);
+      o.group.userData.spriteMat.map?.dispose();
+      o.group.userData.spriteMat.map = makePlayerLabelTexture(p);
+      o.group.userData.spriteMat.needsUpdate = true;
+    }
+  });
+
+  if (threeBall) {
+    threeBall.visible = state.ball.visible;
+    const bPos = to3DCoords(state.ball.x, state.ball.y);
+    threeBall.position.y = 0.25;
+    if (!threeBall.userData.target) {
+      threeBall.position.set(bPos.x, 0.25, bPos.z);
+      threeBall.userData.target = { x: bPos.x, z: bPos.z };
+    } else {
+      threeBall.userData.target.x = bPos.x;
+      threeBall.userData.target.z = bPos.z;
+    }
+  }
+
+  sync3DArrows();
+}
+
+function sync3DArrows() {
+  if (!threeReady || !threeArrowsGroup) return;
+  while (threeArrowsGroup.children.length) {
+    threeArrowsGroup.remove(threeArrowsGroup.children[0]);
+  }
+  state.arrows.forEach(a => {
+    const p1 = to3DCoords(a.x1, a.y1);
+    const p2 = to3DCoords(a.x2, a.y2);
+    const v1 = new THREE.Vector3(p1.x, a.type === 'ball' ? 1.4 : 0.05, p1.z);
+    const v2 = new THREE.Vector3(p2.x, a.type === 'ball' ? 1.4 : 0.05, p2.z);
+    const dir = new THREE.Vector3().subVectors(v2, v1);
+    const len = dir.length();
+    if (len > 0.1) {
+      const arrow = new THREE.ArrowHelper(
+        dir.normalize(),
+        v1,
+        len,
+        a.type === 'ball' ? 0xfde047 : 0xffffff,
+        0.35,
+        0.22
+      );
+      threeArrowsGroup.add(arrow);
+    }
+  });
+}
+
+// --- Export, Import, Image, Reset ---
+$('resetAll').onclick = () => {
+  if (!confirm('모든 선수 명단, 배치, 시나리오 그룹을 초기화할까요?')) return;
+  state.groups = [{ id: 'g1', name: '기본 전술' }];
+  state.scenes = [];
+  state.activeGroup = 'g1';
+  state.arrows = [];
+  state.ball = { visible: true, x: 50, y: 12 };
+  activeSceneId = null;
+  showMemo('');
+  makePlayers(6);
+  say('전체 데이터가 초기화되었습니다.');
+};
+
+$('exportProject').onclick = () => {
+  const payload = { app: 'Volleyball Planner', version: 7, exportedAt: new Date().toISOString(), state };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'volleyball-tactics-v7.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  say('프로젝트 JSON 파일을 다운로드했습니다.');
+};
+
+$('importProject').onclick = () => $('importFile').click();
+$('importFile').onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    const parsed = JSON.parse(await f.text());
+    const incoming = parsed.state || parsed;
+    if (!Array.isArray(incoming.players)) throw new Error('올바른 프로젝트 파일이 아닙니다.');
+    state = { ...state, ...incoming };
+    setCourtType(state.courtType || 'half');
+    render();
+    saveLocal();
+    say('프로젝트 파일을 불러왔습니다.');
+  } catch (err) {
+    alert('가져오기 실패: ' + err.message);
+  }
+  e.target.value = '';
+};
+
+$('copy').onclick = async () => {
+  const text = 'VOLLEYBALL PLANNER V7\n' +
+    state.players.map(p => `${p.id}. ${p.name}${p.role ? ` [${p.role}]` : ''} · X:${p.x.toFixed(1)}% Y:${p.y.toFixed(1)}%`).join('\n');
+  try {
+    await navigator.clipboard.writeText(text);
+    say('포메이션 좌표를 클립보드에 복사했습니다.');
+  } catch (_) {
+    say('클립보드 복사를 지원하지 않는 환경입니다.');
+  }
+};
+
+$('imageSave').onclick = () => {
+  const isFull = state.courtType === 'full';
+  const W = 900, H = isFull ? 1575 : 900;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+
+  // Floor
+  ctx.fillStyle = '#d99f66';
+  ctx.fillRect(0, 0, W, H);
+  if (isFull) {
+    ctx.fillStyle = 'rgba(30,41,59,0.14)';
+    ctx.fillRect(0, 0, W, H / 2);
+  }
+
+  // Border
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 8;
+  ctx.strokeRect(4, 4, W - 8, H - 8);
+
+  // Net & Attack Lines
+  const netY = isFull ? H / 2 : 0;
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0, Math.max(0, netY - 5), W, 10);
+
+  ctx.setLineDash([14, 10]);
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  if (isFull) {
+    ctx.moveTo(0, H * 0.3333); ctx.lineTo(W, H * 0.3333);
+    ctx.moveTo(0, H * 0.6666); ctx.lineTo(W, H * 0.6666);
+  } else {
+    ctx.moveTo(0, H * 0.3333); ctx.lineTo(W, H * 0.3333);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Arrows
+  state.arrows.forEach(a => {
+    const x1 = (a.x1 / 100) * W;
+    const y1 = (toDisplayY(a.y1) / 100) * H;
+    const x2 = (a.x2 / 100) * W;
+    const y2 = (toDisplayY(a.y2) / 100) * H;
+    ctx.strokeStyle = a.type === 'ball' ? '#fde047' : '#ffffff';
+    ctx.lineWidth = 6;
+    if (a.type === 'ball') ctx.setLineDash([12, 8]);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    const ang = Math.atan2(y2 - y1, x2 - x1);
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 20 * Math.cos(ang - 0.4), y2 - 20 * Math.sin(ang - 0.4));
+    ctx.lineTo(x2 - 20 * Math.cos(ang + 0.4), y2 - 20 * Math.sin(ang + 0.4));
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  // Players
+  state.players.forEach(p => {
+    const px = (p.x / 100) * W;
+    const py = (toDisplayY(p.y) / 100) * H;
+    ctx.beginPath();
+    ctx.fillStyle = getRoleColor(p.role, false);
+    ctx.arc(px, py, 42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText(p.role ? `${p.id} (${p.role})` : String(p.id), px, py - 4);
+    ctx.font = '16px sans-serif';
+    ctx.fillText((p.name || '').slice(0, 8), px, py + 22);
+  });
+
+  // Ball
+  if (state.ball.visible) {
+    const bx = (state.ball.x / 100) * W;
+    const by = (toDisplayY(state.ball.y) / 100) * H;
+    ctx.beginPath();
+    ctx.fillStyle = '#eab308';
+    ctx.arc(bx, by, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  const a = document.createElement('a');
+  a.download = 'volleyball-formation-v7.png';
+  a.href = c.toDataURL('image/png');
+  a.click();
+  say('작전판 이미지를 저장했습니다.');
+};
+
+// --- Init ---
+try {
+  const raw = localStorage.getItem('volleyPlannerV7') || localStorage.getItem('volleyPlannerV6');
+  if (raw) {
+    const d = JSON.parse(raw);
+    const loaded = d.state || d;
+    if (loaded.players?.length) {
+      state = {
+        ...state,
+        ...loaded,
+        players: loaded.players.map(p => ({
+          ...p,
+          role: p.role !== undefined ? p.role : (p.libero ? 'L' : '')
+        }))
+      };
+      setCourtType(state.courtType || 'half');
+      render();
+      say('저장된 전술 데이터를 불러왔습니다.');
+    } else {
+      makePlayers(6);
+    }
+  } else {
+    makePlayers(6);
+  }
+} catch (e) {
+  makePlayers(6);
+}
+})();
+</script>
+</body>
+</html>
