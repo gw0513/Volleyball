@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Volleyball Planner</title>
+<style>
+:root{--bg:#101827;--panel:#19263a;--line:#33445d;--text:#f3f6fb;--muted:#a6b4c7;--blue:#2879bd;--orange:#d88b2b;--green:#168568}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
+main{max-width:900px;margin:auto;padding:20px 14px 42px}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+h1{font-size:clamp(21px,4vw,29px);margin:0;letter-spacing:.04em}.muted{color:var(--muted);font-size:12px}.tag{font-size:11px;color:#c8e2ff;border:1px solid var(--line);padding:6px 9px;border-radius:99px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:14px;margin:12px 0}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.grow{flex:1}
+button,select,input{font:inherit}button,select{color:var(--text);background:#24344c;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px}
+button{cursor:pointer}button:active{transform:scale(.98)}button.active{background:#244d72;border-color:#80bfff}
+button.primary{background:#245c8b;border-color:#4b94d1}button.warn{background:#593e24;border-color:#93652e}
+select{min-width:75px}input{width:100%;min-width:0;background:#101b2b;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px}
+.title{font-size:15px;font-weight:750;margin-bottom:9px}.help{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+.court-wrap{width:min(100%,590px);margin:12px auto 0}.court{position:relative;width:100%;aspect-ratio:1/1;background:#dca873;border:3px solid #fff8e9;border-radius:3px;overflow:hidden;touch-action:none;user-select:none}
+.net{position:absolute;left:0;right:0;top:0;height:5px;background:#283341;z-index:1}.netlabel{position:absolute;top:7px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:900;color:#293341}
+.attack{position:absolute;left:0;right:0;top:33.333%;border-top:2px dashed white;pointer-events:none}
+.measure{position:absolute;left:8px;color:#553b24;background:#fff1d5dc;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700}
+.measure.front{top:calc(33.333% - 21px)}.measure.back{top:66.666%}
+.dim{position:absolute;right:8px;bottom:7px;color:#553b24;background:#fff1d5dc;padding:3px 6px;border-radius:4px;font-size:10px}
+#players{position:absolute;inset:0;z-index:2;pointer-events:none}
+.player{position:absolute;pointer-events:auto;width:clamp(53px,11vw,66px);height:clamp(53px,11vw,66px);transform:translate(-50%,-50%);border:2px solid white;border-radius:50%;background:var(--blue);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;box-shadow:0 3px 9px #0005;touch-action:none;user-select:none;cursor:grab;transition:left .4s ease,top .4s ease,background .2s,transform .2s}
+.player .num{font-size:16px;font-weight:850;line-height:19px}.player .pname{font-size:10px;max-width:58px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player.selected{background:var(--orange);outline:4px solid #ffe19b;z-index:5;transform:translate(-50%,-50%) scale(1.08)}
+.player.libero{background:var(--green)}.player.dragging{transition:none;cursor:grabbing;z-index:8}
+.roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:8px}.person{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:7px}.chip{width:28px;height:28px;border-radius:50%;background:var(--blue);display:grid;place-items:center;font-weight:800;font-size:12px}
+.small{font-size:11px;padding:7px 8px}.status{font-size:12px;min-height:18px;color:#c6e2ff;margin-top:9px}
+.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.scenario{border:1px solid var(--line);border-radius:11px;padding:10px}.scenario strong{display:block;font-size:13px;margin-bottom:7px}.scenario .row{gap:6px}
+@media(max-width:480px){main{padding:16px 10px 30px}.panel{padding:11px}.head{align-items:flex-start}}
+</style>
+</head>
+<body>
+<main>
+ <header class="head"><div><h1>VOLLEYBALL PLANNER</h1><div class="muted">배구 포메이션 · 선수 이동 · 상황별 전술 · V4</div></div><span class="tag">우리 팀 코트 9m × 9m</span></header>
+
+ <section class="panel">
+  <div class="row">
+   <strong>선수 인원</strong>
+   <select id="count" aria-label="선수 인원 선택"><option value="6">6명</option><option value="7">7명</option><option value="8">8명</option><option value="9">9명</option></select>
+   <button id="applyCount" class="primary" type="button">인원 적용</button>
+   <span class="grow"></span>
+   <button id="resetAll" class="warn" type="button">초기화 ↻</button>
+  </div>
+  <div class="help">인원 선택 후 ‘인원 적용 / 초기화’를 누르세요. 선택한 인원수에 맞춰 선수가 다시 만들어집니다.</div>
+ </section>
+
+ <section class="panel">
+  <div class="row"><div class="title grow" style="margin:0">우리 팀 코트</div><span class="muted">선수 드래그 가능</span></div>
+  <div class="court-wrap"><div class="court" id="court">
+   <div class="net"></div><div class="netlabel">NET</div><div class="attack"></div>
+   <div class="measure front">전위 · 3m</div><div class="measure back">후위 · 6m</div><div class="dim">가로 9m × 세로 9m</div>
+   <div id="players">
+    <button class="player" style="left:25%;top:17%" data-id="1"><span class="num">1</span><span class="pname">선수 1</span></button>
+    <button class="player" style="left:50%;top:17%" data-id="2"><span class="num">2</span><span class="pname">선수 2</span></button>
+    <button class="player" style="left:75%;top:17%" data-id="3"><span class="num">3</span><span class="pname">선수 3</span></button>
+    <button class="player" style="left:25%;top:65%" data-id="4"><span class="num">4</span><span class="pname">선수 4</span></button>
+    <button class="player" style="left:50%;top:65%" data-id="5"><span class="num">5</span><span class="pname">선수 5</span></button>
+    <button class="player" style="left:75%;top:65%" data-id="6"><span class="num">6</span><span class="pname">선수 6</span></button>
+   </div>
+  </div></div>
+  <div class="row" style="margin-top:11px">
+   <button id="moveMode" class="active">↗ 자유 이동</button><button id="swapMode">⇄ 위치 교체</button><button id="rotate">⟳ 로테이션</button>
+  </div>
+  <div class="help">자유 이동: 선수를 끌거나, 선수를 한 번 누른 뒤 코트의 목적지를 누르세요. 위치 교체: 선수 두 명을 차례로 누르세요.</div>
+  <div class="status" id="status" aria-live="polite">선수 6명이 표시되어야 합니다. 선수를 움직여 보세요.</div>
+ </section>
+
+ <section class="panel">
+  <div class="title">상황별 모션 만들기</div>
+  <div class="help" style="margin:0 0 10px">현재 선수 배치를 상황 1 또는 상황 2로 저장한 다음, 재생을 누르면 저장한 배치로 선수들이 애니메이션 이동합니다.</div>
+  <div class="scenario-grid">
+   <div class="scenario"><strong>상황 1</strong><div class="row"><button class="small" id="save1">현재 배치 저장</button><button class="small primary" id="play1">▶ 재생</button></div><div class="muted" id="state1" style="margin-top:7px">저장되지 않음</div></div>
+   <div class="scenario"><strong>상황 2</strong><div class="row"><button class="small" id="save2">현재 배치 저장</button><button class="small primary" id="play2">▶ 재생</button></div><div class="muted" id="state2" style="margin-top:7px">저장되지 않음</div></div>
+  </div>
+  <div class="row" style="margin-top:9px"><button id="play12" class="primary">상황 1 → 상황 2 순서대로 재생</button><button id="clearScenes">상황 저장 초기화</button></div>
+ </section>
+
+ <section class="panel">
+  <div class="title">선수 명단</div><div class="roster" id="roster"></div>
+  <div class="help">이름 수정 및 리베로 지정이 가능합니다. 리베로는 한 명만 지정할 수 있습니다.</div>
+ </section>
+ <section class="panel row"><button id="copy">포메이션 정보 복사</button><button id="imageSave">배치 이미지 저장</button></section>
+</main>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const base=[[25,17],[50,17],[75,17],[25,65],[50,65],[75,65],[15,43],[85,43],[50,83]];
+let players=[],mode='move',selected=null,drag=null,scenes={1:null,2:null};
+function say(t){$('status').textContent=t}
+function makePlayers(n){
+ players=Array.from({length:n},(_,i)=>({id:i+1,name:'선수 '+(i+1),x:base[i][0],y:base[i][1],libero:false}));
+ selected=null;render();say(n+'명으로 배치를 초기화했습니다.');
+}
+function render(){
+ const layer=$('players');layer.innerHTML='';
+ players.forEach(p=>{
+  const b=document.createElement('button');b.type='button';b.className='player'+(p.id===selected?' selected':'')+(p.libero?' libero':'');
+  b.dataset.id=p.id;b.style.left=p.x+'%';b.style.top=p.y+'%';
+  const num=document.createElement('span');num.className='num';num.textContent=p.id;
+  const name=document.createElement('span');name.className='pname';name.textContent=p.name;
+  b.append(num,name);layer.appendChild(b);
+ });
+ const roster=$('roster');roster.innerHTML='';
+ players.forEach(p=>{
+  const row=document.createElement('div');row.className='person';
+  const chip=document.createElement('span');chip.className='chip';chip.textContent=p.id;
+  const input=document.createElement('input');input.value=p.name;input.setAttribute('aria-label','선수 '+p.id+' 이름');
+  input.addEventListener('input',()=>{p.name=input.value;const name=$('players').querySelector('[data-id="'+p.id+'"] .pname');if(name)name.textContent=p.name});
+  const lib=document.createElement('button');lib.className='small';lib.textContent=p.libero?'리베로 ✓':'리베로';
+  lib.addEventListener('click',()=>{const on=!p.libero;players.forEach(q=>q.libero=false);p.libero=on;render()});
+  row.append(chip,input,lib);roster.appendChild(row);
+ });
+ $('count').value=players.length;
+ $('moveMode').classList.toggle('active',mode==='move');$('swapMode').classList.toggle('active',mode==='swap');
+}
+function choose(id){
+ if(mode==='swap'){
+  if(selected===null){selected=id;say('선수 '+id+' 선택. 위치를 교체할 선수를 선택하세요.')}
+  else if(selected===id){selected=null;say('선택 해제')}
+  else{const a=players.find(p=>p.id===selected),b=players.find(p=>p.id===id);[a.x,b.x]=[b.x,a.x];[a.y,b.y]=[b.y,a.y];selected=null;say('두 선수의 위치를 교체했습니다.')}
+ }else{selected=selected===id?null:id;say(selected?'선수 '+id+' 선택. 이동할 코트 위치를 누르세요.':'선택 해제')}
+ render();
+}
+function point(e){const r=$('court').getBoundingClientRect();return{x:Math.max(7,Math.min(93,(e.clientX-r.left)/r.width*100)),y:Math.max(6,Math.min(94,(e.clientY-r.top)/r.height*100))}}
+const court=$('court');
+court.addEventListener('pointerdown',e=>{
+ const target=e.target.closest('.player');
+ if(mode==='move'&&target){
+  e.preventDefault();const id=Number(target.dataset.id);
+  drag={id,x:e.clientX,y:e.clientY,moved:false};
+  try{court.setPointerCapture(e.pointerId)}catch(_){}
+  target.classList.add('dragging');return;
+ }
+ if(mode==='move'&&selected!==null&&!target){
+  const p=players.find(q=>q.id===selected),pt=point(e);p.x=pt.x;p.y=pt.y;selected=null;render();say(p.name+' 이동 완료');
+ }
+ if(mode==='swap'&&target)choose(Number(target.dataset.id));
+});
+court.addEventListener('pointermove',e=>{
+ if(!drag)return;
+ if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>5)drag.moved=true;
+ if(!drag.moved)return;
+ const p=players.find(q=>q.id===drag.id),pt=point(e);p.x=pt.x;p.y=pt.y;
+ const el=$('players').querySelector('[data-id="'+p.id+'"]');if(el){el.style.left=p.x+'%';el.style.top=p.y+'%'}
+});
+function endDrag(){
+ if(!drag)return;const d=drag;drag=null;
+ if(d.moved){selected=null;render();say(players.find(p=>p.id===d.id).name+' 이동 완료')}
+ else choose(d.id);
+}
+court.addEventListener('pointerup',endDrag);court.addEventListener('pointercancel',endDrag);
+$('count').addEventListener('change',()=>say('선택한 인원은 '+$('count').value+'명입니다. “인원 적용 / 초기화”를 눌러 반영하세요.'));
+$('applyCount').addEventListener('click',()=>makePlayers(Number($('count').value)));
+function resetPlanner(){
+ const n=Number($('count').value);
+ scenes={1:null,2:null};
+ makePlayers(n);
+ updateSceneLabels();
+ say('초기화 완료: '+n+'명 기본 배치로 돌아왔습니다. 선수 이름·위치·상황 저장이 모두 초기화됐습니다.');
+}
+$('resetAll').onclick=resetPlanner;
+$('moveMode').onclick=()=>{mode='move';selected=null;render();say('자유 이동 모드')};
+$('swapMode').onclick=()=>{mode='swap';selected=null;render();say('교체할 두 선수를 차례로 선택하세요.')};
+$('rotate').onclick=()=>{
+ const six=players.slice(0,6),old=six.map(p=>[p.x,p.y]);
+ six.forEach((p,i)=>{const j=(i+5)%6;p.x=old[j][0];p.y=old[j][1]});
+ selected=null;render();say('6개 기본 위치를 시계 방향으로 한 칸 회전했습니다.');
+};
+function snapshot(){return players.map(p=>({id:p.id,x:p.x,y:p.y}))}
+function updateSceneLabels(){[1,2].forEach(i=>{$('state'+i).textContent=scenes[i]?'배치 저장됨 · '+scenes[i].length+'명':'저장되지 않음'})}
+function saveScene(i){scenes[i]=snapshot();updateSceneLabels();say('상황 '+i+'에 현재 배치를 저장했습니다.')}
+function playScene(i){
+ const scene=scenes[i];if(!scene){say('먼저 상황 '+i+'의 배치를 저장하세요.');return}
+ if(scene.length!==players.length){say('상황 '+i+'은 '+scene.length+'명으로 저장되어 있습니다. 현재 인원수와 맞지 않습니다. 다시 저장하세요.');return}
+ selected=null;scene.forEach(s=>{const p=players.find(q=>q.id===s.id);if(p){p.x=s.x;p.y=s.y}});
+ render();say('상황 '+i+' 모션 재생 완료');
+}
+$('save1').onclick=()=>saveScene(1);$('save2').onclick=()=>saveScene(2);
+$('play1').onclick=()=>playScene(1);$('play2').onclick=()=>playScene(2);
+$('play12').onclick=()=>{
+ if(!scenes[1]||!scenes[2]){say('상황 1과 상황 2를 모두 저장하세요.');return}
+ if(scenes[1].length!==players.length||scenes[2].length!==players.length){say('저장된 상황의 인원수와 현재 인원수가 다릅니다. 두 상황을 다시 저장하세요.');return}
+ playScene(1);setTimeout(()=>playScene(2),900);
+};
+$('clearScenes').onclick=()=>{scenes={1:null,2:null};updateSceneLabels();say('상황 1과 2 저장을 지웠습니다.')};
+$('copy').onclick=async()=>{
+ const t='VOLLEYBALL PLANNER\n'+players.map(p=>p.id+'. '+p.name+(p.libero?' (리베로)':'')+' · x '+p.x.toFixed(1)+'% · y '+p.y.toFixed(1)+'%').join('\n');
+ try{await navigator.clipboard.writeText(t);say('포메이션 정보를 복사했습니다.')}catch(_){say('클립보드 권한을 사용할 수 없습니다.')}
+};
+$('imageSave').onclick=()=>{
+ const c=document.createElement('canvas');c.width=900;c.height=900;const x=c.getContext('2d');
+ x.fillStyle='#dca873';x.fillRect(0,0,900,900);x.strokeStyle='white';x.lineWidth=7;x.strokeRect(3,3,894,894);
+ x.fillStyle='#293341';x.fillRect(0,0,900,7);x.setLineDash([12,9]);x.lineWidth=3;x.beginPath();x.moveTo(0,300);x.lineTo(900,300);x.stroke();x.setLineDash([]);
+ x.fillStyle='#543b25';x.font='bold 22px sans-serif';x.fillText('NET',420,40);x.fillText('ATTACK LINE · 3m',18,285);x.fillText('BACK COURT · 6m',18,620);
+ players.forEach(p=>{const px=p.x*9,py=p.y*9;x.beginPath();x.fillStyle=p.libero?'#168568':'#2879bd';x.arc(px,py,39,0,Math.PI*2);x.fill();x.strokeStyle='white';x.lineWidth=4;x.stroke();x.fillStyle='white';x.textAlign='center';x.font='bold 23px sans-serif';x.fillText(p.id,px,py-2);x.font='15px sans-serif';x.fillText(p.name.slice(0,8),px,py+20)});
+ const a=document.createElement('a');a.download='volleyball-formation.png';a.href=c.toDataURL('image/png');a.click();say('배치 이미지를 저장했습니다.');
+};
+window.addEventListener('error',()=>{const el=$('status');if(el)el.textContent='실행 중 오류가 발생했습니다. 페이지를 새로고침해 주세요.';});
+try{makePlayers(6);updateSceneLabels();}
+catch(err){$('status').textContent='초기 실행 오류: '+err.message;} 
+})();
+</script>
+</body>
+</html>
