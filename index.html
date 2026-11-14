@@ -1,0 +1,2076 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Volleyball Planner V9</title>
+<style>
+:root{
+  --bg:#0f172a;
+  --panel:#1e293b;
+  --panel-sub:#151f32;
+  --line:#334155;
+  --text:#f8fafc;
+  --muted:#94a3b8;
+  --blue:#2563eb;
+  --blue-hover:#1d4ed8;
+  --orange:#ea580c;
+  --green:#059669;
+  --purple:#7c3aed;
+  --red:#dc2626;
+  --yellow:#eab308;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;
+  line-height:1.45;
+}
+main{max-width:1180px;margin:auto;padding:16px 14px 48px}
+.head{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:12px;margin-bottom:16px;flex-wrap:wrap;
+}
+h1{font-size:clamp(20px,3.5vw,26px);margin:0;letter-spacing:.03em;display:flex;align-items:center;gap:8px}
+.badge{font-size:11px;background:var(--blue);color:#fff;padding:3px 8px;border-radius:6px;font-weight:700}
+.muted{color:var(--muted);font-size:12px}
+
+/* Layout Grid */
+.workspace{
+  display:grid;
+  grid-template-columns:1.25fr 0.85fr;
+  gap:16px;
+  align-items:start;
+}
+@media(max-width:920px){
+  .workspace{grid-template-columns:1fr}
+}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:14px;
+  box-shadow:0 4px 20px rgba(0,0,0,.2);
+}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.grow{flex:1}
+
+/* Controls */
+button,select,input,textarea{font:inherit}
+button,select{
+  color:var(--text);
+  background:#293548;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:7px 11px;
+  font-size:12.5px;
+  font-weight:500;
+  transition:all .15s;
+}
+button{cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+button:hover{background:#334259}
+button:active{transform:scale(.98)}
+button.active{background:var(--blue);border-color:#60a5fa;color:#fff;font-weight:700}
+button.primary{background:var(--blue);border-color:#3b82f6;color:#fff;font-weight:600}
+button.primary:hover{background:var(--blue-hover)}
+button.warn{background:rgba(220,38,38,.18);border-color:rgba(220,38,38,.5);color:#fca5a5}
+button.warn:hover{background:rgba(220,38,38,.3)}
+button.opp-btn.active{background:var(--red);border-color:#fca5a5;color:#fff}
+button.small{font-size:11.5px;padding:5px 8px}
+button:disabled{opacity:0.4;cursor:not-allowed}
+
+input,textarea,select{
+  background:var(--panel-sub);
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:7px 9px;
+  font-size:12.5px;
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#60a5fa}
+textarea{width:100%;resize:vertical;min-height:52px}
+
+/* Segmented Control */
+.seg{display:inline-flex;background:var(--panel-sub);padding:3px;border-radius:9px;border:1px solid var(--line)}
+.seg button{border:none;background:transparent;padding:6px 12px;border-radius:6px;font-size:12.5px;font-weight:600}
+.seg button.active{background:var(--blue);color:#fff}
+
+/* Primary Mode Switcher (Player Mode vs Memo/Paint Mode) */
+.mode-header{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:8px;flex-wrap:wrap;margin-bottom:10px;
+}
+.main-mode-seg{
+  display:inline-flex;background:#0b1120;padding:4px;border-radius:11px;border:1px solid var(--line);
+}
+.main-mode-seg button{
+  border:none;background:transparent;padding:8px 16px;border-radius:8px;font-size:13.5px;font-weight:700;color:var(--muted);
+}
+.main-mode-seg button.active{
+  background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.4);
+}
+.main-mode-seg button#modeMemoMain.active{
+  background:var(--orange);box-shadow:0 2px 8px rgba(234,88,12,.4);
+}
+
+/* Contextual Sub-toolbar */
+.sub-toolbar{
+  background:var(--panel-sub);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:8px 10px;
+  margin-bottom:12px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;
+}
+
+/* Color Swatches for Paint/Memo Mode */
+.swatch{
+  width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.4);
+  padding:0;cursor:pointer;
+}
+.swatch.active{border-color:#fff;transform:scale(1.15);box-shadow:0 0 0 2px var(--orange)}
+
+/* Tabs */
+.tabs{
+  display:flex;gap:4px;background:var(--panel-sub);
+  padding:4px;border-radius:10px;margin-bottom:12px;border:1px solid var(--line);
+}
+.tab-btn{
+  flex:1;background:transparent;border:none;color:var(--muted);
+  padding:8px 6px;border-radius:7px;font-weight:600;font-size:12.5px;
+}
+.tab-btn.active{background:var(--panel);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* Court Area */
+.court-wrap{width:100%;max-width:560px;margin:0 auto}
+.court{
+  position:relative;width:100%;
+  aspect-ratio:1/1;
+  background:#d99f66;
+  border:3px solid #fff;
+  border-radius:4px;
+  overflow:hidden;
+  touch-action:none;user-select:none;
+  box-shadow:inset 0 0 30px rgba(0,0,0,.08);
+}
+.court.full-court{
+  aspect-ratio:1/2;
+  max-width:380px;
+  margin:0 auto;
+}
+/* Net & Lines */
+.net{
+  position:absolute;left:0;right:0;top:0;height:6px;
+  background:repeating-linear-gradient(90deg,#1e293b 0 6px,#f8fafc 6px 10px);
+  z-index:3;box-shadow:0 2px 5px rgba(0,0,0,.4);pointer-events:none;
+}
+.court.full-court .net{top:50%;transform:translateY(-50%);height:7px}
+.netlabel{
+  position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  font-size:10px;font-weight:800;color:#1e293b;
+  background:rgba(255,255,255,.85);padding:1px 6px;border-radius:4px;z-index:3;pointer-events:none;
+}
+.court.full-court .netlabel{top:calc(50% + 7px)}
+
+.attack{position:absolute;left:0;right:0;top:33.333%;border-top:2px dashed rgba(255,255,255,.9);pointer-events:none;z-index:1}
+.court.full-court .attack.our-attack{top:66.666%}
+.court.full-court .attack.opp-attack{top:33.333%;display:block}
+.attack.opp-attack{display:none}
+
+.opp-zone-bg{
+  display:none;position:absolute;top:0;left:0;right:0;height:50%;
+  background:rgba(15,23,42,.16);pointer-events:none;
+}
+.court.full-court .opp-zone-bg{display:block}
+
+.measure{
+  position:absolute;left:8px;color:#452c15;background:rgba(255,248,231,.85);
+  padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;pointer-events:none;z-index:1;
+}
+.measure.front{top:calc(33.333% - 22px)}
+.court.full-court .measure.front{top:calc(66.666% - 22px)}
+.measure.back{top:68%}
+.court.full-court .measure.back{top:84%}
+.measure.opp{display:none;top:14%}
+.court.full-court .measure.opp{display:block}
+
+/* Drawing SVG Layer */
+#drawLayer{
+  position:absolute;inset:0;width:100%;height:100%;
+  z-index:2;pointer-events:none;
+}
+.court.memo-active #drawLayer{pointer-events:auto;cursor:crosshair;z-index:5}
+
+/* Players & Ball */
+#players{position:absolute;inset:0;z-index:4;pointer-events:none}
+.player{
+  position:absolute;pointer-events:auto;
+  width:clamp(42px,8vw,54px);height:clamp(42px,8vw,54px);
+  transform:translate(-50%,-50%);
+  border:2.5px solid #fff;border-radius:50%;
+  background:var(--blue);color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:2px;box-shadow:0 4px 10px rgba(0,0,0,.38);
+  touch-action:none;user-select:none;cursor:grab;
+  transition:left var(--move-ms,650ms) cubic-bezier(.22,.8,.25,1),top var(--move-ms,650ms) cubic-bezier(.22,.8,.25,1),background .15s,transform .15s;
+}
+.court.memo-active .player{pointer-events:none;opacity:.85}
+.player .num{font-size:14px;font-weight:800;line-height:1.05}
+.player .role-tag{font-size:8.5px;font-weight:800;background:rgba(0,0,0,.35);padding:0 4px;border-radius:3px;margin-top:1px}
+.player .pname{font-size:9px;max-width:48px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.95}
+.player.selected{background:var(--orange)!important;outline:3px solid #fde047;z-index:6;transform:translate(-50%,-50%) scale(1.1)}
+.player.libero{background:var(--green)}
+.player.setter{background:var(--purple)}
+.player.opponent{background:var(--red);border-style:dashed}
+.player.dragging{transition:none!important;cursor:grabbing;z-index:9}
+
+/* Volleyball Object */
+.vball{
+  position:absolute;pointer-events:auto;
+  width:28px;height:28px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:radial-gradient(circle at 32% 32%,#fef08a,#eab308 55%,#2563eb 56%,#1d4ed8);
+  border:2px solid #fff;
+  box-shadow:0 4px 8px rgba(0,0,0,.45);
+  cursor:grab;z-index:7;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  transition:left var(--move-ms,650ms) cubic-bezier(.22,.8,.25,1),top var(--move-ms,650ms) cubic-bezier(.22,.8,.25,1);
+}
+.vball.is-hidden{display:none!important}
+.vball.dragging{transition:none!important;cursor:grabbing}
+.court.memo-active .vball{pointer-events:auto;z-index:8}
+
+/* 3D View & Camera Presets */
+.view3d-wrap{position:relative;width:100%}
+#scene3d{
+  width:100%;height:clamp(380px,58vw,540px);
+  border:2px solid var(--line);border-radius:12px;
+  overflow:hidden;background:linear-gradient(#7dd3fc,#e0f2fe);
+  position:relative;touch-action:none;
+}
+#scene3d canvas{display:block;width:100%;height:100%}
+.cam-bar{
+  position:absolute;top:10px;left:10px;z-index:10;
+  display:flex;gap:5px;flex-wrap:wrap;
+  background:rgba(15,23,42,.75);backdrop-filter:blur(4px);
+  padding:5px;border-radius:9px;border:1px solid rgba(255,255,255,.15);
+}
+
+/* Status & Memo Banner */
+.status-bar{
+  margin-top:10px;padding:9px 12px;border-radius:9px;
+  background:var(--panel-sub);border:1px solid var(--line);
+  font-size:12.5px;color:#bae6fd;display:flex;justify-content:space-between;align-items:center;gap:8px;
+}
+.memo-display{
+  margin-top:8px;padding:10px 12px;border-radius:9px;
+  background:rgba(37,99,235,.14);border-left:4px solid var(--blue);
+  font-size:13px;color:#f1f5f9;display:none;
+}
+
+/* Scene Items */
+.scene-item{
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+  background:var(--panel-sub);border:1px solid var(--line);
+  border-radius:9px;padding:8px 9px;margin-top:7px;
+}
+.scene-item.active-scene{border-color:#60a5fa;background:rgba(37,99,235,.15)}
+.scene-info{flex:1;min-width:110px}
+.scene-title{font-weight:700;font-size:13px}
+.scene-memo-preview{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+
+/* Roster */
+.roster-item{
+  display:grid;grid-template-columns:28px 72px 1fr;
+  align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid rgba(51,65,85,.5);
+}
+.roster-item:last-child{border-bottom:none}
+.chip{
+  width:26px;height:26px;border-radius:50%;background:var(--blue);
+  display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;
+}
+.chip.libero{background:var(--green)}
+.chip.setter{background:var(--purple)}
+.chip.opponent{background:var(--red)}
+
+.help{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+.divider{height:1px;background:var(--line);margin:12px 0}
+</style>
+</head>
+<body>
+<main>
+  <header class="head">
+    <div>
+      <h1>VOLLEYBALL PLANNER <span class="badge">V9</span></h1>
+      <div class="muted">선수 이동 모드 · 그림판 메모 모드 · 3D 원기둥 뷰</div>
+    </div>
+    <div class="row">
+      <div class="seg" role="group" aria-label="뷰 전환">
+        <button id="view2d" class="active">2D 작전판</button>
+        <button id="view3d">3D 입체 뷰</button>
+      </div>
+      <div class="seg" role="group" aria-label="코트 범위">
+        <button id="halfCourtBtn" class="active">반코트 (9×9m)</button>
+        <button id="fullCourtBtn">전체코트 (9×18m)</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <!-- LEFT: COURT & SIMPLIFIED 2-MODE WORKSPACE -->
+    <div>
+      <section class="panel" style="margin-bottom:0">
+        <!-- Top Level Mode Switch -->
+        <div class="mode-header">
+          <div class="main-mode-seg" role="group" aria-label="작업 모드 선택">
+            <button id="modePlayerMain" class="active">🏃 선수 이동 모드</button>
+            <button id="modeMemoMain">🎨 메모 모드 (그림판)</button>
+          </div>
+          <div class="row">
+            <button id="toggleOpp" class="small opp-btn">🛡️ 상대팀 OFF</button>
+          </div>
+        </div>
+
+        <!-- Contextual Sub-Toolbar 1: Player Movement Tools -->
+        <div id="playerSubBar" class="sub-toolbar">
+          <div class="row">
+            <button id="subMove" class="small active">✋ 자유 이동</button>
+            <button id="subSwap" class="small">⇄ 위치 교체</button>
+          </div>
+          <div class="row">
+            <button id="rotate" class="small">⟳ 로테이션</button>
+            <button id="switchPos" class="small">⚡ 포지션 스위치</button>
+            <button id="homePositions" class="small">기본 배치</button>
+          </div>
+        </div>
+
+        <!-- Contextual Sub-Toolbar 2: Memo / Paint Tools -->
+        <div id="memoSubBar" class="sub-toolbar" hidden>
+          <div class="row">
+            <button id="toolMoveArrow" class="small active">↗ 사람 이동</button>
+            <button id="toolBallArc" class="small">⇢ 공 궤적</button>
+            <button id="toolFreePen" class="small">✏️ 자유 펜</button>
+            <button id="toggleBall" class="small active">🏐 공 표시 ON</button>
+          </div>
+          <div class="row">
+            <button class="swatch active" data-color="#ffffff" style="background:#ffffff" title="흰색"></button>
+            <button class="swatch" data-color="#fde047" style="background:#fde047" title="노란색"></button>
+            <button class="swatch" data-color="#38bdf8" style="background:#38bdf8" title="하늘색"></button>
+            <button class="swatch" data-color="#f87171" style="background:#f87171" title="빨간색"></button>
+            <button id="undoDraw" class="small">↩ 실행취소</button>
+            <button id="clearDraw" class="small warn">🗑️ 전체지우기</button>
+          </div>
+        </div>
+
+        <!-- 2D Court -->
+        <div class="court-wrap" id="courtWrap">
+          <div class="court" id="court">
+            <div class="opp-zone-bg"></div>
+            <div class="net"></div>
+            <div class="netlabel">NET</div>
+            <div class="attack opp-attack"></div>
+            <div class="attack our-attack"></div>
+            <div class="measure opp">상대 코트 · 9m</div>
+            <div class="measure front">전위 · 3m</div>
+            <div class="measure back">후위 · 6m</div>
+            <svg id="drawLayer"></svg>
+            <div id="players"></div>
+            <div id="vball" class="vball" title="배구공 (드래그하여 위치 이동)">🏐</div>
+          </div>
+        </div>
+
+        <!-- 3D Court -->
+        <div class="view3d-wrap" id="view3dWrap" hidden>
+          <div class="cam-bar">
+            <button id="camBack" class="small">🎥 우리팀 후방</button>
+            <button id="camTop" class="small">🦅 탑뷰</button>
+            <button id="camSide" class="small">📐 측면 뷰</button>
+            <button id="camNet" class="small">🏐 네트 근접</button>
+          </div>
+          <div id="scene3d" aria-label="3D 배구 코트"></div>
+        </div>
+
+        <div id="memoDisplay" class="memo-display"></div>
+
+        <div class="status-bar">
+          <span id="status">선수 이동 모드: 선수를 드래그하거나 클릭 후 코트를 터치하세요.</span>
+          <span class="muted" id="coordHint">2D 모드</span>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT: TACTICS, ROSTER, SETTINGS -->
+    <div>
+      <section class="panel">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="tab-tactics">🎬 전술 시나리오</button>
+          <button class="tab-btn" data-tab="tab-roster">👕 선수 명단</button>
+          <button class="tab-btn" data-tab="tab-share">💾 저장 · 공유</button>
+        </div>
+
+        <!-- TAB 1: TACTICS & SCENARIOS -->
+        <div id="tab-tactics" class="tab-pane active">
+          <div class="row">
+            <select id="groupSelect" class="grow" aria-label="전술 그룹"></select>
+            <button id="addGroup" class="small">＋ 그룹</button>
+            <button id="renameGroup" class="small">이름</button>
+            <button id="deleteGroup" class="small warn">삭제</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row" style="margin-bottom:6px">
+            <input id="sceneName" class="grow" placeholder="상황 이름 (예: 상대 강서브 리시브)">
+            <button id="saveScene" class="primary">＋ 상황 저장</button>
+          </div>
+          <textarea id="sceneMemo" placeholder="전술 메모 (예: 6번 리베로 수비 커버, 세터 2단 토스)"></textarea>
+
+          <div class="row" style="margin-top:10px;justify-content:space-between">
+            <div class="row">
+              <button id="playGroup" class="primary">▶ 전체 재생</button>
+              <button id="stopPlay" class="small">■ 중지</button>
+            </div>
+            <div class="row">
+              <span class="muted">속도</span>
+              <select id="playSpeed" style="padding:5px 7px;font-size:12px">
+                <option value="0.6">느리게</option>
+                <option value="1" selected>보통</option>
+                <option value="1.6">빠르게</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="sceneList" style="margin-top:8px"></div>
+          <div class="help">💡 <b>💾 버튼</b>을 누르면 현재 선수 배치와 그림판 메모를 기존 상황에 덮어씁니다.</div>
+        </div>
+
+        <!-- TAB 2: ROSTER & POSITIONS -->
+        <div id="tab-roster" class="tab-pane">
+          <div class="row" style="margin-bottom:10px">
+            <strong style="font-size:13px">우리 팀 인원</strong>
+            <select id="count">
+              <option value="6">6명</option>
+              <option value="7">7명</option>
+              <option value="8">8명</option>
+              <option value="9">9명</option>
+            </select>
+            <button id="applyCount" class="small primary">적용</button>
+            <span class="grow"></span>
+            <button id="applyPreset6" class="small">표준 포지션 배정</button>
+          </div>
+          <div id="roster"></div>
+          <div class="help">3D 뷰에서는 선수가 깔끔한 원기둥 형태로 표시되며, 원기둥 옆면에 등번호와 이름이 새겨집니다.</div>
+        </div>
+
+        <!-- TAB 3: EXPORT / IMPORT / RESET -->
+        <div id="tab-share" class="tab-pane">
+          <div class="row">
+            <button id="exportProject" class="primary grow">📤 프로젝트 JSON 내보내기</button>
+            <button id="importProject" class="grow">📥 JSON 가져오기</button>
+            <input id="importFile" type="file" accept=".json,application/json" hidden>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="imageSave" class="grow">🖼️ 작전판 이미지(PNG) 저장</button>
+            <button id="copy" class="grow">📋 좌표 텍스트 복사</button>
+          </div>
+          <div class="divider"></div>
+          <button id="resetAll" class="warn" style="width:100%">⚠️ 전체 데이터 초기화</button>
+          <div class="help" style="margin-top:8px">모든 작업은 브라우저에 자동 저장됩니다.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const uid = () => 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+const baseHalf = [
+  [22, 18], [50, 18], [78, 18],
+  [22, 68], [50, 68], [78, 68],
+  [12, 45], [88, 45], [50, 86]
+];
+
+const baseOpp = [
+  [78, -18], [50, -18], [22, -18],
+  [78, -68], [50, -68], [22, -68]
+];
+
+const ROLES = [
+  { code: '', label: '일반' },
+  { code: 'S', label: 'S' },
+  { code: 'OH', label: 'OH' },
+  { code: 'MB', label: 'MB' },
+  { code: 'OP', label: 'OP' },
+  { code: 'L', label: 'L' }
+];
+
+let state = {
+  players: [],
+  oppPlayers: [],
+  showOpp: false,
+  ball: { visible: true, x: 50, y: 12 },
+  // drawings: { type: 'move'|'ball'|'pen', color: string, x1, y1, x2, y2, points?: [{x,y}] }
+  drawings: [],
+  groups: [{ id: 'g1', name: '기본 전술' }],
+  scenes: [],
+  activeGroup: 'g1',
+  courtType: 'half'
+};
+
+// High-level mode: 'player' | 'memo'
+let mainMode = 'player';
+let playerSubTool = 'move'; // 'move' | 'swap'
+let memoSubTool = 'move';   // 'move' | 'ball' | 'pen'
+let penColor = '#ffffff';
+
+let selected = null;
+let drag = null;
+let ballDrag = null;
+let drawStart = null;
+let playing = false;
+let playToken = 0;
+let activeSceneId = null;
+
+// 3D State
+let viewMode = '2d';
+let renderer3d, scene3d, camera3d, controls3d;
+let threePlayers = new Map();
+let threeBall = null;
+let threeArrowsGroup = null;
+let threeCourtGroup = null;
+let threeReady = false;
+
+// --- Helpers ---
+function say(msg) { $('status').textContent = msg; }
+function saveLocal() {
+  try { localStorage.setItem('volleyPlannerV9', JSON.stringify(state)); } catch (e) {}
+}
+
+function toDisplayY(y) {
+  return state.courtType === 'full' ? 50 + y * 0.5 : y;
+}
+function fromDisplayY(dy) {
+  return state.courtType === 'full' ? (dy - 50) * 2 : dy;
+}
+
+function getRoleColor(role, isOpp = false, hex = false) {
+  if (isOpp) return hex ? 0xdc2626 : '#dc2626';
+  if (role === 'L') return hex ? 0x059669 : '#059669';
+  if (role === 'S') return hex ? 0x7c3aed : '#7c3aed';
+  return hex ? 0x2563eb : '#2563eb';
+}
+
+// --- Tabs ---
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $(btn.dataset.tab).classList.add('active');
+  };
+});
+
+// --- Main Mode Switching (Player Mode vs Memo/Paint Mode) ---
+function setMainMode(newMain) {
+  mainMode = newMain;
+  selected = null;
+  $('modePlayerMain').classList.toggle('active', mainMode === 'player');
+  $('modeMemoMain').classList.toggle('active', mainMode === 'memo');
+
+  $('playerSubBar').hidden = mainMode !== 'player';
+  $('memoSubBar').hidden = mainMode !== 'memo';
+  $('court').classList.toggle('memo-active', mainMode === 'memo');
+
+  render();
+  if (mainMode === 'player') {
+    say(playerSubTool === 'move'
+      ? '선수 이동 모드: 선수를 드래그하거나 클릭 후 빈 코트를 터치하세요.'
+      : '위치 교체 모드: 자리를 바꿀 두 선수를 차례로 클릭하세요.');
+  } else {
+    const toolNames = { move: '사람 이동 화살표', ball: '공 궤적(곡선)', pen: '자유 펜' };
+    say(`메모 모드 (${toolNames[memoSubTool]}): 코트 위에 그리거나 공(🏐) 위치를 옮기세요.`);
+  }
+}
+
+$('modePlayerMain').onclick = () => setMainMode('player');
+$('modeMemoMain').onclick = () => setMainMode('memo');
+
+// Player Sub-tools
+$('subMove').onclick = () => {
+  playerSubTool = 'move';
+  selected = null;
+  $('subMove').classList.add('active');
+  $('subSwap').classList.remove('active');
+  render();
+  say('자유 이동: 선수를 드래그하거나 클릭 후 빈 코트를 터치하세요.');
+};
+$('subSwap').onclick = () => {
+  playerSubTool = 'swap';
+  selected = null;
+  $('subSwap').classList.add('active');
+  $('subMove').classList.remove('active');
+  render();
+  say('위치 교체: 자리를 바꿀 두 선수를 차례로 클릭하세요.');
+};
+
+// Memo Sub-tools
+function setMemoTool(tool) {
+  memoSubTool = tool;
+  $('toolMoveArrow').classList.toggle('active', tool === 'move');
+  $('toolBallArc').classList.toggle('active', tool === 'ball');
+  $('toolFreePen').classList.toggle('active', tool === 'pen');
+  const toolNames = { move: '사람 이동 화살표', ball: '공 궤적(곡선)', pen: '자유 펜' };
+  say(`메모 모드 — ${toolNames[tool]} 선택됨`);
+}
+$('toolMoveArrow').onclick = () => setMemoTool('move');
+$('toolBallArc').onclick = () => setMemoTool('ball');
+$('toolFreePen').onclick = () => setMemoTool('pen');
+
+document.querySelectorAll('.swatch').forEach(sw => {
+  sw.onclick = () => {
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+    sw.classList.add('active');
+    penColor = sw.dataset.color;
+  };
+});
+
+$('undoDraw').onclick = () => {
+  if (!state.drawings.length) { say('취소할 그림이 없습니다.'); return; }
+  state.drawings.pop();
+  renderDrawings();
+  sync3DArrows();
+  saveLocal();
+  say('방금 그린 항목을 취소했습니다.');
+};
+
+$('clearDraw').onclick = () => {
+  state.drawings = [];
+  renderDrawings();
+  sync3DArrows();
+  saveLocal();
+  say('코트 위 메모 그림을 모두 지웠습니다.');
+};
+
+$('toggleBall').onclick = () => {
+  state.ball.visible = !state.ball.visible;
+  render();
+  saveLocal();
+  say(state.ball.visible ? '배구공을 코트에 표시합니다.' : '배구공을 숨겼습니다.');
+};
+
+// --- Court Type & Opponent Toggle ---
+function setCourtType(type) {
+  state.courtType = type;
+  $('halfCourtBtn').classList.toggle('active', type === 'half');
+  $('fullCourtBtn').classList.toggle('active', type === 'full');
+  $('court').classList.toggle('full-court', type === 'full');
+  render();
+  if (threeReady) build3DCourt();
+  saveLocal();
+}
+$('halfCourtBtn').onclick = () => setCourtType('half');
+$('fullCourtBtn').onclick = () => setCourtType('full');
+
+$('toggleOpp').onclick = () => {
+  state.showOpp = !state.showOpp;
+  if (state.showOpp && state.courtType === 'half') {
+    setCourtType('full');
+    say('상대팀 배치를 위해 전체코트(9×18m)로 전환했습니다.');
+  } else {
+    render();
+    saveLocal();
+    say(state.showOpp ? '상대팀 선수를 표시합니다.' : '상대팀 선수를 숨겼습니다.');
+  }
+};
+
+// --- Players & Roster ---
+function makePlayers(n) {
+  const defaultRoles = ['OH', 'MB', 'OP', 'OH', 'MB', 'S', 'L', '', ''];
+  state.players = Array.from({ length: n }, (_, i) => ({
+    id: i + 1,
+    name: '선수 ' + (i + 1),
+    role: defaultRoles[i] || '',
+    x: baseHalf[i][0],
+    y: baseHalf[i][1]
+  }));
+  if (!state.oppPlayers || state.oppPlayers.length !== 6) makeOppPlayers();
+  selected = null;
+  state.drawings = [];
+  render();
+  saveLocal();
+}
+
+function makeOppPlayers() {
+  state.oppPlayers = Array.from({ length: 6 }, (_, i) => ({
+    id: i + 1,
+    name: '상대 ' + (i + 1),
+    role: '',
+    x: baseOpp[i][0],
+    y: baseOpp[i][1]
+  }));
+}
+
+function render() {
+  const layer = $('players');
+  layer.innerHTML = '';
+
+  state.players.forEach(p => {
+    const isSel = selected && selected.team === 'our' && selected.id === p.id;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'player' +
+      (isSel ? ' selected' : '') +
+      (p.role === 'L' ? ' libero' : '') +
+      (p.role === 'S' ? ' setter' : '');
+    b.dataset.team = 'our';
+    b.dataset.id = p.id;
+    b.style.left = p.x + '%';
+    b.style.top = toDisplayY(p.y) + '%';
+
+    const roleBadge = p.role ? `<span class="role-tag">${p.role}</span>` : '';
+    b.innerHTML = `<span class="num">${p.id}</span>${roleBadge}<span class="pname"></span>`;
+    b.querySelector('.pname').textContent = p.name;
+    layer.appendChild(b);
+  });
+
+  if (state.showOpp) {
+    state.oppPlayers.forEach(p => {
+      const isSel = selected && selected.team === 'opp' && selected.id === p.id;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'player opponent' + (isSel ? ' selected' : '');
+      b.dataset.team = 'opp';
+      b.dataset.id = p.id;
+      b.style.left = p.x + '%';
+      b.style.top = toDisplayY(p.y) + '%';
+      b.innerHTML = `<span class="num">${p.id}</span><span class="role-tag">상대</span><span class="pname"></span>`;
+      b.querySelector('.pname').textContent = p.name;
+      layer.appendChild(b);
+    });
+  }
+
+  $('toggleOpp').textContent = state.showOpp ? '🛡️ 상대팀 ON' : '🛡️ 상대팀 OFF';
+  $('toggleOpp').classList.toggle('active', state.showOpp);
+
+  const ballEl = $('vball');
+  ballEl.classList.toggle('is-hidden', !state.ball.visible);
+  ballEl.style.left = state.ball.x + '%';
+  ballEl.style.top = toDisplayY(state.ball.y) + '%';
+  $('toggleBall').textContent = state.ball.visible ? '🏐 공 표시 ON' : '🏐 공 표시 OFF';
+  $('toggleBall').classList.toggle('active', state.ball.visible);
+
+  renderDrawings();
+  renderRoster();
+  renderGroups();
+  sync3DObjects();
+}
+
+function renderRoster() {
+  const roster = $('roster');
+  roster.innerHTML = '';
+  state.players.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'roster-item';
+
+    const chip = document.createElement('span');
+    chip.className = 'chip' + (p.role === 'L' ? ' libero' : '') + (p.role === 'S' ? ' setter' : '');
+    chip.textContent = p.id;
+
+    const roleSel = document.createElement('select');
+    roleSel.style.padding = '5px 4px';
+    roleSel.style.fontSize = '11.5px';
+    ROLES.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.code;
+      opt.textContent = r.code || '일반';
+      if (p.role === r.code) opt.selected = true;
+      roleSel.appendChild(opt);
+    });
+    roleSel.onchange = () => {
+      if (roleSel.value === 'L') {
+        state.players.forEach(q => { if (q.role === 'L') q.role = ''; });
+      }
+      p.role = roleSel.value;
+      render();
+      saveLocal();
+    };
+
+    const input = document.createElement('input');
+    input.value = p.name;
+    input.placeholder = '선수 이름';
+    input.oninput = () => {
+      p.name = input.value;
+      const el = $('players').querySelector(`[data-team="our"][data-id="${p.id}"] .pname`);
+      if (el) el.textContent = p.name;
+      sync3DObjects();
+      saveLocal();
+    };
+
+    row.append(chip, roleSel, input);
+    roster.appendChild(row);
+  });
+  $('count').value = state.players.length;
+}
+
+// --- SVG Paint / Memo Rendering ---
+function renderDrawings() {
+  const svg = $('drawLayer');
+  const isFull = state.courtType === 'full';
+  const vbH = isFull ? 200 : 100;
+  svg.setAttribute('viewBox', `0 0 100 ${vbH}`);
+
+  // Collect unique colors for arrowhead markers
+  const colors = new Set(['#ffffff', '#fde047', '#38bdf8', '#f87171', penColor]);
+  let defs = '<defs>';
+  colors.forEach(col => {
+    const safeId = 'arr-' + col.replace('#', '');
+    defs += `
+      <marker id="${safeId}" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M 0 1.2 L 9.5 5 L 0 8.8 L 2.2 5 z" fill="${col}"/>
+      </marker>
+    `;
+  });
+  defs += '</defs>';
+
+  let body = '';
+  state.drawings.forEach(d => {
+    const col = d.color || (d.type === 'ball' ? '#fde047' : '#ffffff');
+    const markerId = 'arr-' + col.replace('#', '');
+
+    if (d.type === 'pen' && d.points && d.points.length > 1) {
+      const pathStr = d.points.map((pt, idx) => {
+        const px = pt.x;
+        const py = (toDisplayY(pt.y) / 100) * vbH;
+        return (idx === 0 ? 'M ' : 'L ') + `${px.toFixed(2)} ${py.toFixed(2)}`;
+      }).join(' ');
+      body += `<path d="${pathStr}" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>`;
+      body += `<path d="${pathStr}" fill="none" stroke="${col}" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>`;
+    } else if (d.type === 'ball') {
+      const x1 = d.x1, y1 = (toDisplayY(d.y1) / 100) * vbH;
+      const x2 = d.x2, y2 = (toDisplayY(d.y2) / 100) * vbH;
+      const cx = (x1 + x2) / 2 - (y2 - y1) * 0.14;
+      const cy = (y1 + y2) / 2 + (x2 - x1) * 0.14;
+      body += `<path d="M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="2.1" stroke-linecap="round"/>`;
+      body += `<path d="M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}" fill="none" stroke="${col}" stroke-width="1.35" stroke-dasharray="2.4, 1.8" stroke-linecap="round" marker-end="url(#${markerId})"/>`;
+    } else {
+      const x1 = d.x1, y1 = (toDisplayY(d.y1) / 100) * vbH;
+      const x2 = d.x2, y2 = (toDisplayY(d.y2) / 100) * vbH;
+      body += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(0,0,0,0.35)" stroke-width="2.2" stroke-linecap="round"/>`;
+      body += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="1.4" stroke-linecap="round" marker-end="url(#${markerId})"/>`;
+    }
+  });
+
+  body += `<path id="tempPath" d="" fill="none" stroke="${penColor}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" hidden/>`;
+  svg.innerHTML = defs + body;
+}
+
+// --- Coordinate Conversion ---
+function getCourtCoords(clientX, clientY) {
+  const r = $('court').getBoundingClientRect();
+  const dx = Math.max(2, Math.min(98, ((clientX - r.left) / r.width) * 100));
+  const dy = Math.max(1, Math.min(99, ((clientY - r.top) / r.height) * 100));
+  return { dx, dy, y: fromDisplayY(dy) };
+}
+
+function findPlayer(team, id) {
+  const list = team === 'opp' ? state.oppPlayers : state.players;
+  return list.find(p => p.id === id);
+}
+
+// --- Player Interaction (Active only in Player Mode) ---
+$('players').addEventListener('pointerdown', e => {
+  if (mainMode !== 'player') return;
+  const el = e.target.closest('.player');
+  if (!el) return;
+  const team = el.dataset.team;
+  const id = Number(el.dataset.id);
+
+  if (playerSubTool === 'swap') {
+    if (!selected) {
+      selected = { team, id };
+      say('교체할 두 번째 선수를 클릭하세요.');
+    } else if (selected.team === team && selected.id === id) {
+      selected = null;
+      say('선택 해제');
+    } else {
+      const a = findPlayer(selected.team, selected.id);
+      const b = findPlayer(team, id);
+      if (a && b) {
+        [a.x, b.x] = [b.x, a.x];
+        [a.y, b.y] = [b.y, a.y];
+        saveLocal();
+        say('두 선수의 위치를 교체했습니다.');
+      }
+      selected = null;
+    }
+    render();
+    return;
+  }
+
+  if (playerSubTool === 'move') {
+    e.preventDefault();
+    e.stopPropagation();
+    drag = { team, id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false };
+    selected = { team, id };
+    el.classList.add('dragging', 'selected');
+    try { el.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+});
+
+$('players').addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) > 4) {
+    drag.moved = true;
+  }
+  const p = findPlayer(drag.team, drag.id);
+  if (!p) return;
+  const pt = getCourtCoords(e.clientX, e.clientY);
+  p.x = pt.dx;
+  p.y = pt.y;
+  const el = $('players').querySelector(`[data-team="${drag.team}"][data-id="${p.id}"]`);
+  if (el) {
+    el.style.left = p.x + '%';
+    el.style.top = pt.dy + '%';
+  }
+  sync3DObjects();
+});
+
+function endPlayerDrag(e) {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  const wasClick = !drag.moved;
+  const keepSelected = wasClick ? { team: drag.team, id: drag.id } : null;
+  drag = null;
+  selected = keepSelected;
+  render();
+  saveLocal();
+  if (wasClick && keepSelected) {
+    const p = findPlayer(keepSelected.team, keepSelected.id);
+    say(`${p?.name || '선수'} 선택됨 — 코트 빈 곳을 터치하면 이동합니다.`);
+  }
+}
+$('players').addEventListener('pointerup', endPlayerDrag);
+$('players').addEventListener('pointercancel', endPlayerDrag);
+
+// Click empty court to move selected player
+$('court').addEventListener('pointerdown', e => {
+  if (mainMode !== 'player' || playerSubTool !== 'move' || !selected) return;
+  if (e.target.closest('.player') || e.target.closest('.vball')) return;
+  const p = findPlayer(selected.team, selected.id);
+  if (!p) return;
+  const pt = getCourtCoords(e.clientX, e.clientY);
+  p.x = pt.dx;
+  p.y = pt.y;
+  selected = null;
+  render();
+  saveLocal();
+  say(`${p.name} 이동 완료`);
+});
+
+// --- Ball Drag (Works in both modes so you can position ball anytime) ---
+$('vball').addEventListener('pointerdown', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  ballDrag = { pointerId: e.pointerId };
+  $('vball').classList.add('dragging');
+  try { $('vball').setPointerCapture(e.pointerId); } catch (_) {}
+});
+$('vball').addEventListener('pointermove', e => {
+  if (!ballDrag || e.pointerId !== ballDrag.pointerId) return;
+  const pt = getCourtCoords(e.clientX, e.clientY);
+  state.ball.x = pt.dx;
+  state.ball.y = pt.y;
+  $('vball').style.left = pt.dx + '%';
+  $('vball').style.top = pt.dy + '%';
+  sync3DObjects();
+});
+function endBallDrag(e) {
+  if (!ballDrag || e.pointerId !== ballDrag.pointerId) return;
+  ballDrag = null;
+  $('vball').classList.remove('dragging');
+  saveLocal();
+}
+$('vball').addEventListener('pointerup', endBallDrag);
+$('vball').addEventListener('pointercancel', endBallDrag);
+
+// --- Memo / Paint Layer Drawing (Active in Memo Mode) ---
+$('drawLayer').addEventListener('pointerdown', e => {
+  if (mainMode !== 'memo') return;
+  e.preventDefault();
+  const pt = getCourtCoords(e.clientX, e.clientY);
+  drawStart = {
+    pointerId: e.pointerId,
+    x1: pt.dx,
+    y1: pt.y,
+    dy1: pt.dy,
+    points: [{ x: pt.dx, y: pt.y, dy: pt.dy }]
+  };
+  const temp = $('tempPath');
+  if (temp) {
+    const safeId = 'arr-' + penColor.replace('#', '');
+    temp.setAttribute('stroke', penColor);
+    temp.setAttribute('stroke-dasharray', memoSubTool === 'ball' ? '2.4, 1.8' : 'none');
+    if (memoSubTool === 'pen') {
+      temp.removeAttribute('marker-end');
+    } else {
+      temp.setAttribute('marker-end', `url(#${safeId})`);
+    }
+    temp.removeAttribute('hidden');
+  }
+  try { $('drawLayer').setPointerCapture(e.pointerId); } catch (_) {}
+});
+
+$('drawLayer').addEventListener('pointermove', e => {
+  if (!drawStart || e.pointerId !== drawStart.pointerId) return;
+  const pt = getCourtCoords(e.clientX, e.clientY);
+  const vbH = state.courtType === 'full' ? 200 : 100;
+  const temp = $('tempPath');
+  if (!temp) return;
+
+  if (memoSubTool === 'pen') {
+    drawStart.points.push({ x: pt.dx, y: pt.y, dy: pt.dy });
+    const dStr = drawStart.points.map((p, idx) => {
+      const py = (p.dy / 100) * vbH;
+      return (idx === 0 ? 'M ' : 'L ') + `${p.x.toFixed(2)} ${py.toFixed(2)}`;
+    }).join(' ');
+    temp.setAttribute('d', dStr);
+  } else if (memoSubTool === 'ball') {
+    const x1 = drawStart.x1, y1 = (drawStart.dy1 / 100) * vbH;
+    const x2 = pt.dx, y2 = (pt.dy / 100) * vbH;
+    const cx = (x1 + x2) / 2 - (y2 - y1) * 0.14;
+    const cy = (y1 + y2) / 2 + (x2 - x1) * 0.14;
+    temp.setAttribute('d', `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`);
+  } else {
+    const x1 = drawStart.x1, y1 = (drawStart.dy1 / 100) * vbH;
+    const x2 = pt.dx, y2 = (pt.dy / 100) * vbH;
+    temp.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
+  }
+});
+
+$('drawLayer').addEventListener('pointerup', e => {
+  if (!drawStart || e.pointerId !== drawStart.pointerId) return;
+  const pt = getCourtCoords(e.clientX, e.clientY);
+
+  if (memoSubTool === 'pen') {
+    if (drawStart.points.length > 2) {
+      state.drawings.push({
+        type: 'pen',
+        color: penColor,
+        points: drawStart.points.map(p => ({ x: p.x, y: p.y }))
+      });
+      saveLocal();
+    }
+  } else {
+    const dist = Math.hypot(pt.dx - drawStart.x1, pt.dy - drawStart.dy1);
+    if (dist > 2.5) {
+      state.drawings.push({
+        type: memoSubTool, // 'move' or 'ball'
+        color: penColor,
+        x1: drawStart.x1,
+        y1: drawStart.y1,
+        x2: pt.dx,
+        y2: pt.y
+      });
+      saveLocal();
+    }
+  }
+
+  drawStart = null;
+  renderDrawings();
+  sync3DArrows();
+});
+
+// --- Rotation & Position Switch ---
+$('rotate').onclick = () => {
+  const six = state.players.slice(0, 6);
+  const old = six.map(p => [p.x, p.y]);
+  six.forEach((p, i) => {
+    const j = (i + 5) % 6;
+    p.x = old[j][0];
+    p.y = old[j][1];
+  });
+  render();
+  saveLocal();
+  say('로테이션을 1칸 회전했습니다.');
+};
+
+$('homePositions').onclick = () => {
+  state.players.forEach((p, i) => {
+    p.x = baseHalf[i][0];
+    p.y = baseHalf[i][1];
+  });
+  if (state.showOpp) {
+    state.oppPlayers.forEach((p, i) => {
+      p.x = baseOpp[i][0];
+      p.y = baseOpp[i][1];
+    });
+  }
+  render();
+  saveLocal();
+  say('기본 배치로 복귀했습니다.');
+};
+
+$('switchPos').onclick = () => {
+  const six = state.players.slice(0, 6);
+  const front = six.filter(p => p.y < 45);
+  const back = six.filter(p => p.y >= 45);
+
+  const frontOrder = r => r === 'OH' ? 1 : (r === 'MB' ? 2 : 3);
+  front.sort((a, b) => frontOrder(a.role) - frontOrder(b.role));
+  [22, 50, 78].forEach((x, idx) => { if (front[idx]) front[idx].x = x; });
+
+  const backOrder = r => (r === 'OH' || r === 'L') ? 1 : (r === 'MB' ? 2 : 3);
+  back.sort((a, b) => backOrder(a.role) - backOrder(b.role));
+  [22, 50, 78].forEach((x, idx) => { if (back[idx]) back[idx].x = x; });
+
+  render();
+  saveLocal();
+  say('포지션 기준 전·후위 스위치를 적용했습니다.');
+};
+
+$('applyCount').onclick = () => {
+  const n = Number($('count').value);
+  if (confirm(`우리 팀 인원을 ${n}명으로 변경하면 현재 배치가 초기화됩니다. 계속할까요?`)) {
+    makePlayers(n);
+    say(`우리 팀 인원을 ${n}명으로 설정했습니다.`);
+  }
+};
+
+$('applyPreset6').onclick = () => {
+  const roles = ['OH', 'MB', 'OP', 'OH', 'MB', 'S', 'L'];
+  state.players.forEach((p, i) => { p.role = roles[i] || ''; });
+  render();
+  saveLocal();
+  say('표준 배구 포지션을 배정했습니다.');
+};
+
+// --- Tactical Groups & Scenes ---
+function renderGroups() {
+  const sel = $('groupSelect');
+  sel.innerHTML = '';
+  state.groups.forEach(g => {
+    const o = document.createElement('option');
+    o.value = g.id;
+    o.textContent = g.name;
+    sel.append(o);
+  });
+  if (!state.groups.some(g => g.id === state.activeGroup)) {
+    state.activeGroup = state.groups[0]?.id;
+  }
+  sel.value = state.activeGroup;
+
+  const list = $('sceneList');
+  list.innerHTML = '';
+  const items = state.scenes.filter(s => s.groupId === state.activeGroup);
+
+  if (!items.length) {
+    list.innerHTML = '<div class="help" style="text-align:center;padding:14px 0">이 그룹에 저장된 상황이 없습니다.</div>';
+    return;
+  }
+
+  items.forEach((s, idx) => {
+    const item = document.createElement('div');
+    item.className = 'scene-item' + (s.id === activeSceneId ? ' active-scene' : '');
+
+    const info = document.createElement('div');
+    info.className = 'scene-info';
+    info.innerHTML = `<div class="scene-title">${idx + 1}. ${s.name}</div>` +
+      (s.memo ? `<div class="scene-memo-preview">📝 ${s.memo}</div>` : '');
+
+    const btnPlay = document.createElement('button');
+    btnPlay.className = 'small primary';
+    btnPlay.textContent = '▶';
+    btnPlay.title = '이 상황 재생';
+    btnPlay.onclick = () => playScene(s.id);
+
+    const btnOverwrite = document.createElement('button');
+    btnOverwrite.className = 'small';
+    btnOverwrite.textContent = '💾';
+    btnOverwrite.title = '현재 코트 배치를 이 상황에 덮어쓰기';
+    btnOverwrite.onclick = () => {
+      if (!confirm(`현재 코트 배치와 메모 그림을 “${s.name}”에 덮어쓸까요?`)) return;
+      s.positions = state.players.map(p => ({ id: p.id, x: p.x, y: p.y }));
+      s.oppPositions = state.oppPlayers.map(p => ({ id: p.id, x: p.x, y: p.y }));
+      s.showOpp = state.showOpp;
+      s.ball = { ...state.ball };
+      s.drawings = JSON.parse(JSON.stringify(state.drawings));
+      activeSceneId = s.id;
+      renderGroups();
+      saveLocal();
+      say(`“${s.name}” 상황을 업데이트했습니다.`);
+    };
+
+    const btnUp = document.createElement('button');
+    btnUp.className = 'small';
+    btnUp.textContent = '↑';
+    btnUp.disabled = idx === 0;
+    btnUp.onclick = () => moveScene(s.id, -1);
+
+    const btnDown = document.createElement('button');
+    btnDown.className = 'small';
+    btnDown.textContent = '↓';
+    btnDown.disabled = idx === items.length - 1;
+    btnDown.onclick = () => moveScene(s.id, 1);
+
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'small';
+    btnEdit.textContent = '메모';
+    btnEdit.onclick = () => {
+      const newName = prompt('상황 이름', s.name);
+      if (newName !== null && newName.trim()) s.name = newName.trim();
+      const newMemo = prompt('전술 메모 (비워두면 삭제)', s.memo || '');
+      if (newMemo !== null) s.memo = newMemo.trim();
+      renderGroups();
+      saveLocal();
+    };
+
+    const btnDel = document.createElement('button');
+    btnDel.className = 'small warn';
+    btnDel.textContent = '삭제';
+    btnDel.onclick = () => {
+      if (confirm('이 상황을 삭제할까요?')) {
+        state.scenes = state.scenes.filter(x => x.id !== s.id);
+        renderGroups();
+        saveLocal();
+      }
+    };
+
+    item.append(info, btnPlay, btnOverwrite, btnUp, btnDown, btnEdit, btnDel);
+    list.appendChild(item);
+  });
+}
+
+function moveScene(sceneId, dir) {
+  const groupScenes = state.scenes.filter(s => s.groupId === state.activeGroup);
+  const idx = groupScenes.findIndex(s => s.id === sceneId);
+  if (idx < 0 || idx + dir < 0 || idx + dir >= groupScenes.length) return;
+  const realIdxA = state.scenes.indexOf(groupScenes[idx]);
+  const realIdxB = state.scenes.indexOf(groupScenes[idx + dir]);
+  [state.scenes[realIdxA], state.scenes[realIdxB]] = [state.scenes[realIdxB], state.scenes[realIdxA]];
+  renderGroups();
+  saveLocal();
+}
+
+$('groupSelect').onchange = () => {
+  state.activeGroup = $('groupSelect').value;
+  renderGroups();
+  saveLocal();
+};
+$('addGroup').onclick = () => {
+  const name = prompt('새 전술 그룹 이름 (예: 서브 리시브 A)');
+  if (!name || !name.trim()) return;
+  const g = { id: uid(), name: name.trim() };
+  state.groups.push(g);
+  state.activeGroup = g.id;
+  renderGroups();
+  saveLocal();
+};
+$('renameGroup').onclick = () => {
+  const g = state.groups.find(x => x.id === state.activeGroup);
+  if (!g) return;
+  const name = prompt('그룹 이름 변경', g.name);
+  if (name && name.trim()) {
+    g.name = name.trim();
+    renderGroups();
+    saveLocal();
+  }
+};
+$('deleteGroup').onclick = () => {
+  if (state.groups.length < 2) { alert('최소 1개의 그룹은 유지해야 합니다.'); return; }
+  if (!confirm('현재 그룹과 포함된 모든 상황을 삭제할까요?')) return;
+  state.scenes = state.scenes.filter(s => s.groupId !== state.activeGroup);
+  state.groups = state.groups.filter(g => g.id !== state.activeGroup);
+  state.activeGroup = state.groups[0].id;
+  renderGroups();
+  saveLocal();
+};
+
+$('saveScene').onclick = () => {
+  const countInGroup = state.scenes.filter(s => s.groupId === state.activeGroup).length;
+  const name = $('sceneName').value.trim() || `상황 ${countInGroup + 1}`;
+  const memo = $('sceneMemo').value.trim();
+  const newScene = {
+    id: uid(),
+    name,
+    memo,
+    groupId: state.activeGroup,
+    positions: state.players.map(p => ({ id: p.id, x: p.x, y: p.y })),
+    oppPositions: state.oppPlayers.map(p => ({ id: p.id, x: p.x, y: p.y })),
+    showOpp: state.showOpp,
+    ball: { ...state.ball },
+    drawings: JSON.parse(JSON.stringify(state.drawings))
+  };
+  state.scenes.push(newScene);
+  activeSceneId = newScene.id;
+  $('sceneName').value = '';
+  $('sceneMemo').value = '';
+  renderGroups();
+  saveLocal();
+  say(`“${name}” 상황을 저장했습니다.`);
+};
+
+function showMemo(memo) {
+  const box = $('memoDisplay');
+  if (memo) {
+    box.style.display = 'block';
+    box.textContent = '📝 전술 메모: ' + memo;
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function animateTo(scene, token) {
+  return new Promise(resolve => {
+    if (token !== playToken) { resolve(); return; }
+    if (scene.positions.length !== state.players.length) {
+      say(`“${scene.name}”은 ${scene.positions.length}명 기준입니다. 현재 인원(${state.players.length}명)과 다릅니다.`);
+      resolve();
+      return;
+    }
+
+    activeSceneId = scene.id;
+    showMemo(scene.memo);
+
+    const speed = Number($('playSpeed').value) || 1;
+    const baseMs = Math.round(700 / speed);
+
+    state.players.forEach(p => {
+      const target = scene.positions.find(q => q.id === p.id);
+      if (target) { p.x = target.x; p.y = target.y; }
+    });
+    if (scene.oppPositions && scene.oppPositions.length) {
+      scene.oppPositions.forEach(tp => {
+        const op = state.oppPlayers.find(q => q.id === tp.id);
+        if (op) { op.x = tp.x; op.y = tp.y; }
+      });
+    }
+    if (scene.showOpp !== undefined) {
+      state.showOpp = scene.showOpp;
+      if (state.showOpp && state.courtType === 'half') setCourtType('full');
+    }
+    if (scene.ball) {
+      state.ball = { ...scene.ball };
+    }
+    const savedDraw = scene.drawings || scene.arrows || [];
+    state.drawings = JSON.parse(JSON.stringify(savedDraw));
+
+    render();
+    document.querySelectorAll('.player, .vball').forEach(el => {
+      el.style.setProperty('--move-ms', baseMs + 'ms');
+    });
+
+    say(`▶ “${scene.name}” 재생 중…`);
+    setTimeout(() => resolve(), baseMs + 120);
+  });
+}
+
+async function playScene(id) {
+  const s = state.scenes.find(x => x.id === id);
+  if (!s) return;
+  playToken++;
+  playing = true;
+  const token = playToken;
+  await animateTo(s, token);
+  if (token === playToken) {
+    playing = false;
+    saveLocal();
+    say(`“${s.name}” 재생 완료`);
+  }
+}
+
+$('playGroup').onclick = async () => {
+  const items = state.scenes.filter(s => s.groupId === state.activeGroup);
+  if (!items.length) { say('재생할 상황이 없습니다.'); return; }
+  playToken++;
+  const token = playToken;
+  playing = true;
+  const speed = Number($('playSpeed').value) || 1;
+
+  for (const s of items) {
+    if (token !== playToken) break;
+    await animateTo(s, token);
+    await new Promise(r => setTimeout(r, Math.round(450 / speed)));
+  }
+  if (token === playToken) {
+    playing = false;
+    saveLocal();
+    say('그룹 시나리오 전체 재생이 완료되었습니다.');
+  }
+};
+
+$('stopPlay').onclick = () => {
+  playToken++;
+  playing = false;
+  say('재생을 중지했습니다.');
+};
+
+// =========================================================================
+// 3D VISUALIZATION (Clean Tall Cylinder Pieces with Name Printed on Side)
+// =========================================================================
+function setView(mode) {
+  viewMode = mode;
+  $('courtWrap').hidden = mode !== '2d';
+  $('view3dWrap').hidden = mode !== '3d';
+  $('view2d').classList.toggle('active', mode === '2d');
+  $('view3d').classList.toggle('active', mode === '3d');
+  $('coordHint').textContent = mode === '2d' ? '2D 편집 모드' : '3D 입체 뷰 (드래그: 회전 / 휠·핀치: 줌)';
+
+  if (mode === '3d') {
+    init3D();
+    sync3DObjects();
+    const w = $('scene3d').clientWidth;
+    const h = $('scene3d').clientHeight;
+    renderer3d.setSize(w, h);
+    camera3d.aspect = w / h;
+    camera3d.updateProjectionMatrix();
+  }
+}
+$('view2d').onclick = () => setView('2d');
+$('view3d').onclick = () => setView('3d');
+
+function setCameraPreset(pos, target) {
+  if (!camera3d || !controls3d) return;
+  camera3d.position.set(...pos);
+  controls3d.target.set(...target);
+  controls3d.update();
+}
+$('camBack').onclick = () => setCameraPreset([0, 7.5, 11.5], [0, 0.9, 0]);
+$('camTop').onclick = () => setCameraPreset([0, 16.5, 0.5], [0, 0, 0]);
+$('camSide').onclick = () => setCameraPreset([13.5, 6.0, 0], [0, 0.9, 0]);
+$('camNet').onclick = () => {
+  const netZ = state.courtType === 'full' ? 0 : -4.5;
+  setCameraPreset([4.5, 3.4, netZ + 3.8], [0, 1.4, netZ]);
+};
+
+function createNetTexture() {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 128;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 512, 128);
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0, 0, 512, 14);
+  ctx.fillRect(0, 118, 512, 10);
+
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.88)';
+  ctx.lineWidth = 3;
+  for (let x = 0; x <= 512; x += 16) {
+    ctx.beginPath(); ctx.moveTo(x, 14); ctx.lineTo(x, 118); ctx.stroke();
+  }
+  for (let y = 14; y <= 118; y += 16) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.repeat.set(9, 1);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// Cylindrical Side Wrap Texture (Prints player number, role & name clearly around the cylinder side)
+function makeCylinderSideTexture(p, isOpp = false) {
+  const c = document.createElement('canvas');
+  c.width = 1024;
+  c.height = 512;
+  const ctx = c.getContext('2d');
+
+  const bgHex = isOpp ? '#dc2626' : (p.role === 'L' ? '#059669' : (p.role === 'S' ? '#7c3aed' : '#2563eb'));
+  ctx.fillStyle = bgHex;
+  ctx.fillRect(0, 0, 1024, 512);
+
+  // Subtle top & bottom white trim bands
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.fillRect(0, 0, 1024, 24);
+  ctx.fillRect(0, 488, 1024, 24);
+
+  // Print on both front (+Z) and back (-Z) sides of the cylinder circumference so it's readable from any camera angle
+  // In Three.js CylinderGeometry UV, u=0.25 and u=0.75 correspond to opposite sides
+  const positionsX = [256, 768];
+  const displayName = (p.name || `선수 ${p.id}`).slice(0, 7);
+  const subLabel = isOpp ? `상대 #${p.id}` : (p.role ? `#${p.id} · ${p.role}` : `#${p.id}`);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  positionsX.forEach(cx => {
+    // Number & Role
+    ctx.font = 'bold 76px system-ui, "Noto Sans KR", sans-serif';
+    ctx.fillText(subLabel, cx, 175);
+
+    // Player Name
+    ctx.font = 'bold 92px system-ui, "Noto Sans KR", sans-serif';
+    let nameText = displayName;
+    while (ctx.measureText(nameText).width > 420 && nameText.length > 2) {
+      nameText = nameText.slice(0, -1);
+    }
+    ctx.fillText(nameText, cx, 320);
+  });
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function makeCylinderTopTexture(p, isOpp = false) {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 256;
+  const ctx = c.getContext('2d');
+
+  const bgHex = isOpp ? '#b91c1c' : (p.role === 'L' ? '#047857' : (p.role === 'S' ? '#6d28d9' : '#1d4ed8'));
+  ctx.fillStyle = bgHex;
+  ctx.fillRect(0, 0, 256, 256);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 96px system-ui, sans-serif';
+  ctx.fillText(String(p.id), 128, 132);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function build3DCourt() {
+  if (threeCourtGroup) scene3d.remove(threeCourtGroup);
+  threeCourtGroup = new THREE.Group();
+
+  const isFull = state.courtType === 'full';
+  const lengthZ = isFull ? 18 : 9;
+  const netZ = isFull ? 0 : -4.5;
+
+  const apron = new THREE.Mesh(
+    new THREE.PlaneGeometry(13, lengthZ + 4),
+    new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.85 })
+  );
+  apron.rotation.x = -Math.PI / 2;
+  apron.position.set(0, -0.02, 0);
+  threeCourtGroup.add(apron);
+
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(9, lengthZ),
+    new THREE.MeshStandardMaterial({ color: 0xd99f66, roughness: 0.78 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, 0, 0);
+  floor.receiveShadow = true;
+  threeCourtGroup.add(floor);
+
+  const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  function addLine(w, d, x, z) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), lineMat);
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(x, 0.008, z);
+    threeCourtGroup.add(m);
+  }
+
+  const zMin = isFull ? -9 : -4.5;
+  const zMax = isFull ? 9 : 4.5;
+
+  addLine(0.08, lengthZ, -4.5, 0);
+  addLine(0.08, lengthZ, 4.5, 0);
+  addLine(9.08, 0.08, 0, zMin);
+  addLine(9.08, 0.08, 0, zMax);
+  addLine(9, 0.07, 0, netZ + 3);
+
+  if (isFull) {
+    addLine(9, 0.07, 0, netZ - 3);
+    addLine(9, 0.08, 0, netZ);
+  }
+
+  // Realistic Volleyball Net
+  const netGroup = new THREE.Group();
+  netGroup.position.set(0, 0, netZ);
+
+  const postGeo = new THREE.CylinderGeometry(0.06, 0.06, 2.55, 16);
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.6, roughness: 0.3 });
+  const postL = new THREE.Mesh(postGeo, postMat); postL.position.set(-4.85, 1.275, 0);
+  const postR = new THREE.Mesh(postGeo, postMat); postR.position.set(4.85, 1.275, 0);
+  netGroup.add(postL, postR);
+
+  const netMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(9.0, 1.0),
+    new THREE.MeshStandardMaterial({ map: createNetTexture(), transparent: true, side: THREE.DoubleSide, roughness: 0.6 })
+  );
+  netMesh.position.set(0, 1.93, 0);
+  netGroup.add(netMesh);
+
+  const sideTapeGeo = new THREE.BoxGeometry(0.06, 1.0, 0.02);
+  const sideTapeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const tapeL = new THREE.Mesh(sideTapeGeo, sideTapeMat); tapeL.position.set(-4.48, 1.93, 0);
+  const tapeR = new THREE.Mesh(sideTapeGeo, sideTapeMat); tapeR.position.set(4.48, 1.93, 0);
+  netGroup.add(tapeL, tapeR);
+
+  const antGeo = new THREE.CylinderGeometry(0.015, 0.015, 1.8, 10);
+  const antMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+  const antL = new THREE.Mesh(antGeo, antMat); antL.position.set(-4.5, 2.33, 0);
+  const antR = new THREE.Mesh(antGeo, antMat); antR.position.set(4.5, 2.33, 0);
+  netGroup.add(antL, antR);
+
+  threeCourtGroup.add(netGroup);
+  scene3d.add(threeCourtGroup);
+}
+
+// Tall Cylinder Player Piece (Height: 1.65m, Radius: 0.38m) with Name Printed on the Side
+function createPlayerCylinder(p, isOpp = false) {
+  const height = 1.65;
+  const radius = 0.38;
+  const geo = new THREE.CylinderGeometry(radius, radius, height, 48);
+
+  const sideMat = new THREE.MeshStandardMaterial({
+    map: makeCylinderSideTexture(p, isOpp),
+    roughness: 0.45
+  });
+  const topMat = new THREE.MeshStandardMaterial({
+    map: makeCylinderTopTexture(p, isOpp),
+    roughness: 0.5
+  });
+  const bottomMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
+
+  const mesh = new THREE.Mesh(geo, [sideMat, topMat, bottomMat]);
+  mesh.position.y = height / 2;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+
+  // Base white outline ring on the floor
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(radius + 0.02, radius + 0.08, 48),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = -height / 2 + 0.012;
+  mesh.add(ring);
+
+  return mesh;
+}
+
+function init3D() {
+  if (threeReady) return;
+  const host = $('scene3d');
+
+  renderer3d = new THREE.WebGLRenderer({ antialias: true });
+  renderer3d.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer3d.setSize(host.clientWidth, host.clientHeight);
+  renderer3d.outputColorSpace = THREE.SRGBColorSpace;
+  renderer3d.shadowMap.enabled = true;
+  host.appendChild(renderer3d.domElement);
+
+  scene3d = new THREE.Scene();
+  scene3d.background = new THREE.Color(0xbae6fd);
+  scene3d.fog = new THREE.Fog(0xbae6fd, 24, 52);
+
+  camera3d = new THREE.PerspectiveCamera(45, host.clientWidth / host.clientHeight, 0.1, 100);
+  camera3d.position.set(0, 8.5, 11.5);
+
+  controls3d = new OrbitControls(camera3d, renderer3d.domElement);
+  controls3d.target.set(0, 0.9, 0);
+  controls3d.enableDamping = true;
+  controls3d.dampingFactor = 0.07;
+  controls3d.minDistance = 4;
+  controls3d.maxDistance = 28;
+  controls3d.maxPolarAngle = Math.PI * 0.48;
+
+  scene3d.add(new THREE.HemisphereLight(0xffffff, 0x475569, 1.6));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+  dirLight.position.set(6, 14, 8);
+  dirLight.castShadow = true;
+  scene3d.add(dirLight);
+
+  build3DCourt();
+
+  threeBall = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 24, 24),
+    new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.4 })
+  );
+  threeBall.castShadow = true;
+  scene3d.add(threeBall);
+
+  threeArrowsGroup = new THREE.Group();
+  scene3d.add(threeArrowsGroup);
+
+  threeReady = true;
+  sync3DObjects();
+
+  const ro = new ResizeObserver(() => {
+    if (!renderer3d) return;
+    const w = host.clientWidth, h = host.clientHeight;
+    if (w > 0 && h > 0) {
+      renderer3d.setSize(w, h);
+      camera3d.aspect = w / h;
+      camera3d.updateProjectionMatrix();
+    }
+  });
+  ro.observe(host);
+
+  const animate = () => {
+    requestAnimationFrame(animate);
+    if (!threeReady) return;
+    threePlayers.forEach(o => {
+      o.mesh.position.x += (o.target.x - o.mesh.position.x) * 0.14;
+      o.mesh.position.z += (o.target.z - o.mesh.position.z) * 0.14;
+    });
+    if (threeBall && threeBall.userData.target) {
+      threeBall.position.x += (threeBall.userData.target.x - threeBall.position.x) * 0.14;
+      threeBall.position.z += (threeBall.userData.target.z - threeBall.position.z) * 0.14;
+    }
+    controls3d.update();
+    renderer3d.render(scene3d, camera3d);
+  };
+  animate();
+}
+
+function to3DCoords(px, py) {
+  const x = ((px - 50) / 100) * 9;
+  const z = state.courtType === 'full'
+    ? (py / 100) * 9
+    : ((py - 50) / 100) * 9;
+  return { x, z };
+}
+
+function sync3DObjects() {
+  if (!threeReady) return;
+
+  const activeKeys = new Set();
+
+  function upsertCylinder(p, isOpp) {
+    const key = (isOpp ? 'opp-' : 'our-') + p.id;
+    activeKeys.add(key);
+    const pos = to3DCoords(p.x, p.y);
+    let o = threePlayers.get(key);
+    if (!o) {
+      const mesh = createPlayerCylinder(p, isOpp);
+      mesh.position.set(pos.x, 1.65 / 2, pos.z);
+      scene3d.add(mesh);
+      o = { mesh, target: { x: pos.x, z: pos.z } };
+      threePlayers.set(key, o);
+    } else {
+      o.target.x = pos.x;
+      o.target.z = pos.z;
+      o.mesh.material[0].map?.dispose();
+      o.mesh.material[0].map = makeCylinderSideTexture(p, isOpp);
+      o.mesh.material[0].needsUpdate = true;
+      o.mesh.material[1].map?.dispose();
+      o.mesh.material[1].map = makeCylinderTopTexture(p, isOpp);
+      o.mesh.material[1].needsUpdate = true;
+    }
+  }
+
+  state.players.forEach(p => upsertCylinder(p, false));
+  if (state.showOpp) {
+    state.oppPlayers.forEach(p => upsertCylinder(p, true));
+  }
+
+  for (const [key, o] of threePlayers) {
+    if (!activeKeys.has(key)) {
+      scene3d.remove(o.mesh);
+      o.mesh.geometry.dispose();
+      o.mesh.material.forEach(m => { m.map?.dispose(); m.dispose(); });
+      threePlayers.delete(key);
+    }
+  }
+
+  if (threeBall) {
+    threeBall.visible = state.ball.visible;
+    const bPos = to3DCoords(state.ball.x, state.ball.y);
+    threeBall.position.y = 0.25;
+    if (!threeBall.userData.target) {
+      threeBall.position.set(bPos.x, 0.25, bPos.z);
+      threeBall.userData.target = { x: bPos.x, z: bPos.z };
+    } else {
+      threeBall.userData.target.x = bPos.x;
+      threeBall.userData.target.z = bPos.z;
+    }
+  }
+
+  sync3DArrows();
+}
+
+function sync3DArrows() {
+  if (!threeReady || !threeArrowsGroup) return;
+  while (threeArrowsGroup.children.length) {
+    threeArrowsGroup.remove(threeArrowsGroup.children[0]);
+  }
+  state.drawings.forEach(d => {
+    const colHex = parseInt((d.color || '#ffffff').replace('#', ''), 16);
+
+    if (d.type === 'pen' && d.points && d.points.length > 1) {
+      const pts3d = d.points.map(pt => {
+        const c = to3DCoords(pt.x, pt.y);
+        return new THREE.Vector3(c.x, 0.06, c.z);
+      });
+      const curve = new THREE.CatmullRomCurve3(pts3d);
+      const geo = new THREE.TubeGeometry(curve, Math.max(12, pts3d.length * 2), 0.03, 6, false);
+      threeArrowsGroup.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: colHex })));
+    } else if (d.type === 'ball') {
+      const p1 = to3DCoords(d.x1, d.y1);
+      const p2 = to3DCoords(d.x2, d.y2);
+      const start = new THREE.Vector3(p1.x, 1.3, p1.z);
+      const end = new THREE.Vector3(p2.x, 1.3, p2.z);
+      const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+      mid.y += Math.max(1.2, start.distanceTo(end) * 0.25);
+      const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+      const mat = new THREE.MeshBasicMaterial({ color: colHex });
+      threeArrowsGroup.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.035, 8, false), mat));
+
+      const tangent = curve.getTangent(1).normalize();
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 12), mat);
+      cone.position.copy(end);
+      cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent);
+      threeArrowsGroup.add(cone);
+    } else {
+      const p1 = to3DCoords(d.x1, d.y1);
+      const p2 = to3DCoords(d.x2, d.y2);
+      const v1 = new THREE.Vector3(p1.x, 0.05, p1.z);
+      const v2 = new THREE.Vector3(p2.x, 0.05, p2.z);
+      const dir = new THREE.Vector3().subVectors(v2, v1);
+      const len = dir.length();
+      if (len > 0.1) {
+        threeArrowsGroup.add(new THREE.ArrowHelper(dir.normalize(), v1, len, colHex, 0.35, 0.22));
+      }
+    }
+  });
+}
+
+// --- Export, Import, Image, Reset ---
+$('resetAll').onclick = () => {
+  if (!confirm('모든 선수 명단, 배치, 시나리오 그룹을 초기화할까요?')) return;
+  state.groups = [{ id: 'g1', name: '기본 전술' }];
+  state.scenes = [];
+  state.activeGroup = 'g1';
+  state.drawings = [];
+  state.showOpp = false;
+  state.ball = { visible: true, x: 50, y: 12 };
+  activeSceneId = null;
+  showMemo('');
+  makeOppPlayers();
+  makePlayers(6);
+  say('전체 데이터가 초기화되었습니다.');
+};
+
+$('exportProject').onclick = () => {
+  const payload = { app: 'Volleyball Planner', version: 9, exportedAt: new Date().toISOString(), state };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'volleyball-tactics-v9.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  say('프로젝트 JSON 파일을 다운로드했습니다.');
+};
+
+$('importProject').onclick = () => $('importFile').click();
+$('importFile').onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    const parsed = JSON.parse(await f.text());
+    const incoming = parsed.state || parsed;
+    if (!Array.isArray(incoming.players)) throw new Error('올바른 프로젝트 파일이 아닙니다.');
+    state = { ...state, ...incoming };
+    if (!Array.isArray(state.drawings)) state.drawings = incoming.arrows || [];
+    if (!Array.isArray(state.oppPlayers) || !state.oppPlayers.length) makeOppPlayers();
+    setCourtType(state.courtType || 'half');
+    render();
+    saveLocal();
+    say('프로젝트 파일을 불러왔습니다.');
+  } catch (err) {
+    alert('가져오기 실패: ' + err.message);
+  }
+  e.target.value = '';
+};
+
+$('copy').onclick = async () => {
+  const text = 'VOLLEYBALL PLANNER V9\n' +
+    state.players.map(p => `${p.id}. ${p.name}${p.role ? ` [${p.role}]` : ''} · X:${p.x.toFixed(1)}% Y:${p.y.toFixed(1)}%`).join('\n');
+  try {
+    await navigator.clipboard.writeText(text);
+    say('포메이션 좌표를 클립보드에 복사했습니다.');
+  } catch (_) {
+    say('클립보드 복사를 지원하지 않는 환경입니다.');
+  }
+};
+
+$('imageSave').onclick = () => {
+  const isFull = state.courtType === 'full';
+  const W = 900, H = isFull ? 1800 : 900;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+
+  ctx.fillStyle = '#d99f66';
+  ctx.fillRect(0, 0, W, H);
+  if (isFull) {
+    ctx.fillStyle = 'rgba(15,23,42,0.16)';
+    ctx.fillRect(0, 0, W, H / 2);
+  }
+
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 8;
+  ctx.strokeRect(4, 4, W - 8, H - 8);
+
+  const netY = isFull ? H / 2 : 0;
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0, Math.max(0, netY - 5), W, 10);
+
+  ctx.setLineDash([14, 10]);
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  if (isFull) {
+    ctx.moveTo(0, H * 0.3333); ctx.lineTo(W, H * 0.3333);
+    ctx.moveTo(0, H * 0.6666); ctx.lineTo(W, H * 0.6666);
+  } else {
+    ctx.moveTo(0, H * 0.3333); ctx.lineTo(W, H * 0.3333);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  state.drawings.forEach(d => {
+    const col = d.color || (d.type === 'ball' ? '#fde047' : '#ffffff');
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+
+    if (d.type === 'pen' && d.points && d.points.length > 1) {
+      d.points.forEach((pt, idx) => {
+        const px = (pt.x / 100) * W;
+        const py = (toDisplayY(pt.y) / 100) * H;
+        if (idx === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+    } else if (d.type === 'ball') {
+      const x1 = (d.x1 / 100) * W, y1 = (toDisplayY(d.y1) / 100) * H;
+      const x2 = (d.x2 / 100) * W, y2 = (toDisplayY(d.y2) / 100) * H;
+      ctx.setLineDash([12, 8]);
+      const cx = (x1 + x2) / 2 - (y2 - y1) * 0.14;
+      const cy = (y1 + y2) / 2 + (x2 - x1) * 0.14;
+      ctx.moveTo(x1, y1);
+      ctx.quadraticCurveTo(cx, cy, x2, y2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const ang = Math.atan2(y2 - cy, x2 - cx);
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 22 * Math.cos(ang - 0.4), y2 - 22 * Math.sin(ang - 0.4));
+      ctx.lineTo(x2 - 22 * Math.cos(ang + 0.4), y2 - 22 * Math.sin(ang + 0.4));
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      const x1 = (d.x1 / 100) * W, y1 = (toDisplayY(d.y1) / 100) * H;
+      const x2 = (d.x2 / 100) * W, y2 = (toDisplayY(d.y2) / 100) * H;
+      ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      const ang = Math.atan2(y2 - y1, x2 - x1);
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 22 * Math.cos(ang - 0.4), y2 - 22 * Math.sin(ang - 0.4));
+      ctx.lineTo(x2 - 22 * Math.cos(ang + 0.4), y2 - 22 * Math.sin(ang + 0.4));
+      ctx.closePath();
+      ctx.fill();
+    }
+  });
+
+  function drawCirclePlayer(p, isOpp) {
+    const px = (p.x / 100) * W;
+    const py = (toDisplayY(p.y) / 100) * H;
+    ctx.beginPath();
+    ctx.fillStyle = getRoleColor(p.role, isOpp, false);
+    ctx.arc(px, py, 40, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 5;
+    if (isOpp) ctx.setLineDash([8, 6]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 23px sans-serif';
+    ctx.fillText(isOpp ? `상대 ${p.id}` : (p.role ? `${p.id} (${p.role})` : String(p.id)), px, py - 4);
+    ctx.font = '15px sans-serif';
+    ctx.fillText((p.name || '').slice(0, 8), px, py + 22);
+  }
+
+  state.players.forEach(p => drawCirclePlayer(p, false));
+  if (state.showOpp) state.oppPlayers.forEach(p => drawCirclePlayer(p, true));
+
+  if (state.ball.visible) {
+    const bx = (state.ball.x / 100) * W;
+    const by = (toDisplayY(state.ball.y) / 100) * H;
+    ctx.beginPath();
+    ctx.fillStyle = '#eab308';
+    ctx.arc(bx, by, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  const a = document.createElement('a');
+  a.download = 'volleyball-formation-v9.png';
+  a.href = c.toDataURL('image/png');
+  a.click();
+  say('작전판 이미지를 저장했습니다.');
+};
+
+// --- Init ---
+try {
+  const raw = localStorage.getItem('volleyPlannerV9') || localStorage.getItem('volleyPlannerV8') || localStorage.getItem('volleyPlannerV7') || localStorage.getItem('volleyPlannerV6');
+  if (raw) {
+    const d = JSON.parse(raw);
+    const loaded = d.state || d;
+    if (loaded.players?.length) {
+      state = {
+        ...state,
+        ...loaded,
+        drawings: loaded.drawings || loaded.arrows || [],
+        players: loaded.players.map(p => ({
+          ...p,
+          role: p.role !== undefined ? p.role : (p.libero ? 'L' : '')
+        }))
+      };
+      if (!Array.isArray(state.oppPlayers) || !state.oppPlayers.length) makeOppPlayers();
+      setCourtType(state.courtType || 'half');
+      render();
+      say('저장된 전술 데이터를 불러왔습니다.');
+    } else {
+      makeOppPlayers();
+      makePlayers(6);
+    }
+  } else {
+    makeOppPlayers();
+    makePlayers(6);
+  }
+} catch (e) {
+  makeOppPlayers();
+  makePlayers(6);
+}
+})();
+</script>
+</body>
+</html>
