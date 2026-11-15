@@ -2026,10 +2026,8 @@ $('importFile').onchange = async e => {
 };
 
 $('copy').onclick = async () => {
-  const text = 'VOLLEYBALL PLANNER V9.1
-' +
-    state.players.map(p => `${p.id}. ${p.name}${p.role ? ` [${p.role}]` : ''} · X:${p.x.toFixed(1)}% Y:${p.y.toFixed(1)}%`).join('
-');
+  const text = 'VOLLEYBALL PLANNER V9.1\n' +
+    state.players.map(p => `${p.id}. ${p.name}${p.role ? ` [${p.role}]` : ''} · X:${p.x.toFixed(1)}% Y:${p.y.toFixed(1)}%`).join('\n');
   try {
     await navigator.clipboard.writeText(text);
     say('포메이션 좌표를 클립보드에 복사했습니다.');
